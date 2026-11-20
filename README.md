@@ -23,6 +23,11 @@ AUREL brings the supplied fashion, virtual-styling and smoothie experiences into
 - Demo-only payment outcomes. No card data, live payment gateway or real money is used.
 - USD and EUR orders are kept separate; a mixed-currency bag must be checked out in separate demo orders.
 
+
+## Demo checkout flow
+
+The customer bag routes to a dedicated checkout screen. Customers can select the simulated card or wallet method and choose an approved or declined test outcome. The API records the resulting demo order and payment reference; it never asks for card numbers, bank credentials, OTPs or real payment secrets. Successful simulations create processing orders, while declined simulations are recorded as failed/cancelled demo orders.
+
 ## Stack
 
 - Frontend: React, Vite, JavaScript, CSS and Lucide icons.
