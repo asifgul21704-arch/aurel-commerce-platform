@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { randomUUID } from "node:crypto";
 import Order from "../models/Order.js";
-import { requireAuth } from "../middleware/auth.js";
+import { requireAuth, allowRoles } from "../middleware/auth.js";
 import { catalog } from "../data/catalog.js";
 
 const router = Router();
@@ -34,6 +34,19 @@ router.post("/demo-checkout", requireAuth, async (req, res) => {
     status: outcome === "succeeded" ? "processing" : "cancelled"
   });
   res.status(201).json({ message: outcome === "succeeded" ? "Demo payment approved. No money was charged." : "Demo payment declined. No money was charged.", order });
+});
+
+router.get("/admin/orders", requireAuth, allowRoles("admin", "owner"), async (_req, res) => {
+  const orders = await Order.find().populate("customer", "name email").sort({ createdAt: -1 }).limit(100);
+  res.json({ orders });
+});
+
+router.patch("/admin/orders/:id/status", requireAuth, allowRoles("admin", "owner"), async (req, res) => {
+  const allowed = ["pending", "processing", "completed", "cancelled"];
+  if (!allowed.includes(req.body.status)) return res.status(400).json({ message: "Invalid order status." });
+  const order = await Order.findByIdAndUpdate(req.params.id, { status: req.body.status }, { new: true }).populate("customer", "name email");
+  if (!order) return res.status(404).json({ message: "Order not found." });
+  res.json({ order });
 });
 
 router.get("/my-orders", requireAuth, async (req, res) => {
