@@ -51,3 +51,6 @@
 @media(prefers-reduced-motion:reduce){.blendy-artwork,.blendy-piece>div{animation:none!important}}
 
 .runway-size-add{display:flex;align-items:center;gap:5px}.runway-size-add select{height:27px;max-width:48px;border:1px solid #c7c7c7;background:#fff;font-size:8px;padding:0 3px}.runway-size-add button{flex-shrink:0}
+
+.vell-profile{height:90px}.vell-avatar{width:72px;height:72px;flex:0 0 72px;border-radius:14px;border:1.5px solid rgba(255,255,255,.85);box-shadow:0 0 16px #ffffff55;background-repeat:no-repeat;background-size:272px 410px;background-position:-100px -9px}.vell-profile b{font-size:17px}.vell-profile small{font-size:8px}.vell-filter-thumbs{display:flex;gap:4px;align-items:center}.vell-filter-thumbs button{width:25px;height:25px;border-radius:7px;border:1px solid #ffffff55;background-repeat:no-repeat;background-color:#ffffff25;transition:.2s}.vell-filter-thumbs button.active{outline:2px solid #fff;outline-offset:2px;transform:translateY(-2px)}
+@media(max-width:650px){.vell-profile{height:65px}.vell-avatar{width:48px;height:48px;flex-basis:48px;background-size:181px 273px;background-position:-67px -6px}.vell-profile b{font-size:11px}.vell-profile small{font-size:6px}.vell-filter-thumbs button{width:19px;height:19px;border-radius:5px}}
