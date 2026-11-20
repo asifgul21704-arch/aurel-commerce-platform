@@ -59,7 +59,7 @@ function App(){
       fetch(`${API}/catalog`).then(async response=>{const data=await response.json();if(!response.ok)throw new Error(data.message||"Unable to load the catalog.");return data})
     ])
       .then(([account,catalog])=>{if(!active)return;const byId=new Map((catalog.products||[]).map(product=>[product.productId,product]));const restored=(account.cartItems||[]).map(item=>({...byId.get(item.productId),...item,id:item.productId})).filter(item=>item.name);setCart(previous=>{const merged=[...restored];for(const guestItem of previous){const match=merged.find(item=>item.id===guestItem.id&&item.size===guestItem.size&&item.color===guestItem.color);if(match)match.quantity=Math.min(20,match.quantity+guestItem.quantity);else if(merged.length<30&&guestItem.name)merged.push(guestItem)}return merged});setSaved(previous=>[...new Set([...(account.savedProductIds||[]),...previous])].slice(0,100));setCommerceOwner(token);setCommerceReady(true)})
-      .catch(()=>{if(active)setCommerceReady(true)});
+      .catch(error=>{if(active){setCommerceReady(true);notify(error.message||"Your saved bag could not be loaded. Please try again.")}});
     return()=>{active=false};
   },[token]);
   useEffect(()=>{
