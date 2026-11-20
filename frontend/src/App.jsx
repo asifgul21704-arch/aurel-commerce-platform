@@ -8,6 +8,7 @@ import RunwaySection from "./components/RunwaySection.jsx";
 import VellStudio from "./components/VellStudio.jsx";
 import ProductQuickView from "./components/ProductQuickView.jsx";
 import BlendySection from "./components/BlendySection.jsx";
+import { useCatalog } from "./hooks/useCatalog.js";
 
 const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 const CDN = "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2F";
@@ -76,8 +77,9 @@ function App(){
 function Home({add,saved,setSaved}){
   const [slide,setSlide]=useState(0);
   const [filter,setFilter]=useState("All");
+  const liveLooks=useCatalog(looks);
   const [selectedProduct,setSelectedProduct]=useState(null);
-  const visible=filter==="All"?looks:looks.filter(p=>p.category===filter);
+  const visible=filter==="All"?liveLooks:liveLooks.filter(p=>p.category===filter);
   const heroImages=[looks[0].image,looks[6].image,looks[7].image];
   const current=looks[slide%looks.length];
   const toggleSave=id=>setSaved(old=>old.includes(id)?old.filter(x=>x!==id):[...old,id]);
@@ -91,7 +93,7 @@ function Home({add,saved,setSaved}){
     <section className="collection-section" id="vell"><div className="section-heading"><div><span className="eyebrow">THE VELL STUDIO</span><h2>Find your <i>form.</i></h2></div><p>Eight looks. One character. A world of possibilities.<br/>Explore the original VELL virtual styling collection.</p></div>
       <VellStudio add={add}/>
       <div className="filter-row">{["All","Everyday","Athletic","Sleep","Formal","Party","Street"].map(f=><button key={f} className={filter===f?"active":""} onClick={()=>setFilter(f)}>{f}</button>)}<span>{visible.length.toString().padStart(2,"0")} LOOKS</span></div>
-      <div className="product-grid">{visible.map((p,i)=><article className="product-card" key={p.id}><div className="product-image" role="button" tabIndex={0} onClick={()=>setSelectedProduct(p)} onKeyDown={e=>e.key==="Enter"&&setSelectedProduct(p)}><img src={p.image} alt={p.name}/><span className="product-number">0{looks.indexOf(p)+1}</span><button className={saved.includes(p.id)?"heart-button active":"heart-button"} onClick={e=>{e.stopPropagation();toggleSave(p.id)}} aria-label="Save look"><Heart size={17}/></button><button className="quick-add" onClick={e=>{e.stopPropagation();add(p)}}>ADD TO BAG <Plus size={14}/></button></div><div className="product-meta"><div><small>{p.category.toUpperCase()} · VELL STUDIO</small><h3>{p.name}</h3></div><b>{money(p.price,p.currency||"USD")}</b></div></article>)}</div>
+      <div className="product-grid">{visible.map((p,i)=><article className="product-card" key={p.id}><div className="product-image" role="button" tabIndex={0} onClick={()=>setSelectedProduct(p)} onKeyDown={e=>e.key==="Enter"&&setSelectedProduct(p)}><img src={p.image} alt={p.name}/><span className="product-number">0{i+1}</span><button className={saved.includes(p.id)?"heart-button active":"heart-button"} onClick={e=>{e.stopPropagation();toggleSave(p.id)}} aria-label="Save look"><Heart size={17}/></button><button className="quick-add" onClick={e=>{e.stopPropagation();add(p)}}>ADD TO BAG <Plus size={14}/></button></div><div className="product-meta"><div><small>{p.category.toUpperCase()} · VELL STUDIO</small><h3>{p.name}</h3></div><b>{money(p.price,p.currency||"USD")}</b></div></article>)}</div>
     </section>
     <OffcutSection add={add}/>
     <VirtualFitSection add={add}/>
