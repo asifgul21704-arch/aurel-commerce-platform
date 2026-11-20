@@ -228,16 +228,20 @@ function DemoCheckoutPage({user,token,onCheckoutComplete}){
 
 function AccountPage({user,token,signOut}){
   const [orders,setOrders]=useState([]);
+  const [wishlist,setWishlist]=useState([]);
   useEffect(()=>{
     if(token)fetch(API+"/payments/my-orders",{headers:{Authorization:"Bearer "+token}})
       .then(r=>r.json()).then(d=>setOrders(d.orders||[])).catch(()=>{});
+    if(token)fetch(API+"/account/wishlist",{headers:{Authorization:"Bearer "+token}})
+      .then(r=>r.json()).then(d=>setWishlist(d.products||[])).catch(()=>{});
   },[token]);
   if(!user)return <div className="center-state"><h2>Sign in to view your account.</h2><Link className="dark-button inline" to="/login">Sign in</Link></div>;
   return <main className="dashboard-page">
     <div className="dashboard-title"><span className="eyebrow">YOUR AUREL ACCOUNT</span><h1>Hello, <i>{user.name.split(" ")[0]}.</i></h1><p>Keep your saved looks close and your orders in view.</p></div>
     <div className="account-grid">
       <div className="account-card"><small>MEMBER PROFILE</small><UserRound/><h3>{user.name}</h3><p>{user.email}</p><span className="role-pill">{user.role}</span><button className="under-link" onClick={signOut}>Sign out</button></div>
-      <div className="account-card orders-card"><small>ORDER HISTORY</small><h3>Your orders</h3>{orders.length?orders.map(o=><div className="order-row" key={o._id}><span>{o.payment?.reference}</span><b>{money(o.total,o.currency||"USD")}</b><em>{o.payment?.status}</em></div>):<p>No orders yet. Your next discovery is waiting.</p>}</div>\n      <div className="account-card orders-card" id="saved"><small>YOUR WISHLIST</small><h3>Saved pieces</h3>{wishlist.length?wishlist.map(p=><div className="order-row" key={p.productId}><span>{p.name}</span><b>{money(p.price,p.currency||"USD")}</b><em>{p.collection}</em></div>):<p>No saved products yet. Tap the heart on a product to keep it here.</p>}</div>
+      <div className="account-card orders-card"><small>ORDER HISTORY</small><h3>Your orders</h3>{orders.length?orders.map(o=><div className="order-row" key={o._id}><span>{o.payment?.reference}</span><b>{money(o.total,o.currency||"USD")}</b><em>{o.payment?.status}</em></div>):<p>No orders yet. Your next discovery is waiting.</p>}</div>
+      <div className="account-card orders-card" id="saved"><small>YOUR WISHLIST</small><h3>Saved pieces</h3>{wishlist.length?wishlist.map(p=><div className="order-row" key={p.productId}><span>{p.name}</span><b>{money(p.price,p.currency||"USD")}</b><em>{p.collection}</em></div>):<p>No saved products yet. Tap the heart on a product to keep it here.</p>}</div>
     </div>
     <p className="demo-disclaimer">Payments in this project are simulated for demonstration. No card details or real funds are processed.</p>
   </main>;
