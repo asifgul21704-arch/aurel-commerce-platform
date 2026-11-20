@@ -1,0 +1,23 @@
+import { Router } from "express";
+import { requireAuth, allowRoles } from "../middleware/auth.js";
+
+const router = Router();
+
+const catalog = [
+  { id: "vell-denim-maxi", name: "Denim Maxi", collection: "VELL Studio", category: "Everyday", price: 450, currency: "USD", image: "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261112_034542_a6430ecf-9862-412c-8ef6-5745115bd78c.png&w=1000&q=85" },
+  { id: "vell-cloud-set", name: "Cloud Set", collection: "VELL Studio", category: "Everyday", price: 326, currency: "USD", image: "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261112_034738_73282737-acc8-41e9-a822-96c663e27b6c.png&w=1000&q=85" },
+  { id: "vell-library-knit", name: "Library Knit", collection: "VELL Studio", category: "Everyday", price: 384, currency: "USD", image: "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261112_034742_9a8a92fd-79ae-4163-9ffa-14ae2a68717f.png&w=1000&q=85" },
+  { id: "vell-lilac-run", name: "Lilac Run", collection: "VELL Studio", category: "Athletic", price: 344, currency: "USD", image: "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261112_034735_4e352e03-ad2b-44d1-9fcf-4b5b9454dc55.png&w=1000&q=85" },
+  { id: "vell-satin-night", name: "Satin Night", collection: "VELL Studio", category: "Sleep", price: 158, currency: "USD", image: "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261112_034738_aeb8ea57-6399-4f3c-b54a-4a57d0bd971e.png&w=1000&q=85" },
+  { id: "vell-night-suit", name: "Night Suit", collection: "VELL Studio", category: "Formal", price: 672, currency: "USD", image: "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261112_034736_aace5c5f-8c14-4b00-83ba-744dbad2e337.png&w=1000&q=85" },
+  { id: "vell-sage-slip", name: "Sage Slip", collection: "VELL Studio", category: "Party", price: 366, currency: "USD", image: "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261112_034735_3d9fb69e-b4e0-49f7-a2d4-e592bd616c27.png&w=1000&q=85" },
+  { id: "vell-bomber-cargo", name: "Bomber Cargo", collection: "VELL Studio", category: "Street", price: 526, currency: "USD", image: "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261112_034740_3e3c5ad7-689b-46a2-8e09-c7d36a569b9c.png&w=1000&q=85" },
+  { id: "blendy-berry", name: "Berry", collection: "Blendy", category: "Smoothie", price: 8, currency: "USD", image: "https://images.higgs.ai/?default=1&output=webp&w=2048&q=85&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261117_053958_8803e421-29b1-4c24-8efd-54cae3f479b4.png" },
+  { id: "blendy-kiwi", name: "Kiwi", collection: "Blendy", category: "Smoothie", price: 8, currency: "USD", image: "https://images.higgs.ai/?default=1&output=webp&w=2048&q=85&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261117_053958_b5695e60-72da-4b5b-bfb7-a091d528af75.png" },
+  { id: "blendy-banana", name: "Banana", collection: "Blendy", category: "Smoothie", price: 8, currency: "USD", image: "https://images.higgs.ai/?default=1&output=webp&w=2048&q=85&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261117_053958_6cf14029-4bce-4c9a-b9fc-1c5b185082e3.png" },
+  { id: "blendy-strawberry", name: "Strawberry", collection: "Blendy", category: "Smoothie", price: 8, currency: "USD", image: "https://images.higgs.ai/?default=1&output=webp&w=2048&q=85&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261117_055135_cbfb5a8d-c52b-4358-a6ee-d941c6c42285.png" }
+];
+
+router.get("/", (_req, res) => res.json({ products: catalog }));
+router.get("/admin/summary", requireAuth, allowRoles("admin", "owner"), (_req, res) => res.json({ products: catalog.length, collections: 6, note: "Catalog management foundation is ready." }));
+export default router;
