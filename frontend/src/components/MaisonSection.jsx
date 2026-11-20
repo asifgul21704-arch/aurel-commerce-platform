@@ -25,10 +25,10 @@ export default function MaisonSection({add}){
   measure();const observer=new ResizeObserver(measure);observer.observe(node);return()=>observer.disconnect();
  },[]);
  useEffect(()=>{
-  let raf,last=performance.now();
+  let raf=null,last=performance.now();
   const tick=now=>{const dt=Math.min(50,now-last);last=now;const p=positionRef.current,t=targetRef.current;const next=p+(t-p)*(1-Math.exp(-dt*.0072));positionRef.current=Math.abs(t-next)<.0004?t:next;setPosition(positionRef.current);if(Math.abs(t-positionRef.current)>.0004)raf=requestAnimationFrame(tick);else raf=null};
   const ensure=()=>{if(raf===null)raf=requestAnimationFrame(tick)};
-  let raf=null;ensure();const timer=setInterval(ensure,40);
+  ensure();const timer=setInterval(ensure,40);
   return()=>{clearInterval(timer);if(raf!==null)cancelAnimationFrame(raf)};
  },[]);
  const step=d=>{targetRef.current=Math.round(targetRef.current+d)};
@@ -42,7 +42,7 @@ export default function MaisonSection({add}){
   <div className="maison-header"><span>05 — MAISON VELL / RUNWAY DEPTH LOOKBOOK</span><span>SPRING / SUMMER 2027</span></div>
   <div className="maison-main"><div className="maison-stage" ref={stageRef} tabIndex={0} onKeyDown={key} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={pointerUp} onWheel={wheel}>
    <div className="maison-stage-title"><small>SPRING SUMMER 2027</small><h2>Softness &<br/><i>strength.</i></h2><p>A study in softness and strength. The new season collection blends delicate textures and modern silhouettes, crafted for a more beautiful tomorrow.</p></div>
-   {modelNodes.map(m=><button key={m.i} className="maison-model" style={{left:`${m.x*100}%`,top:`${m.feet*100}%`,width:`${m.w}px`,height:`${m.h}px`,opacity:m.opacity,filter:`blur(${m.blur}px)`,zIndex:100-Math.round(m.d*10),pointerEvents:m.opacity<.05?"none":"auto"}} onClick={()=>{targetRef.current=position+m.d}} aria-label={`View Look ${15+m.i}`}><svg viewBox={`${LOOKS[m.i][0]} 48 ${LOOKS[m.i][1]-LOOKS[m.i][0]} 448`} preserveAspectRatio="xMidYMax meet"><image href={MODELS} width="960" height="540"/></svg></button>)}
+   {modelNodes.map(m=><button key={m.i} className="maison-model" style={{left:`${m.x*100}%`,top:`calc(${m.feet*100}% - ${m.h}px)`,width:`${m.w}px`,height:`${m.h}px`,opacity:m.opacity,filter:`blur(${m.blur}px)`,zIndex:100-Math.round(m.d*10),pointerEvents:m.opacity<.05?"none":"auto"}} onClick={()=>{targetRef.current=position+m.d}} aria-label={`View Look ${15+m.i}`}><svg viewBox={`${LOOKS[m.i][0]} 48 ${LOOKS[m.i][1]-LOOKS[m.i][0]} 448`} preserveAspectRatio="xMidYMax meet"><image href={MODELS} width="960" height="540"/></svg></button>)}
    <div className="maison-look-number"><span>LOOK</span><strong>{lookNumber}</strong><small>/ 20</small><a href="#maison-rail">SHOP THE LOOK</a></div>
    <div className="maison-arrows"><button onClick={()=>step(-1)} aria-label="Previous look"><ArrowLeft/></button><button onClick={()=>step(1)} aria-label="Next look"><ArrowRight/></button></div>
   </div>
