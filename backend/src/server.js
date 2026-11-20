@@ -7,6 +7,7 @@ import { connectDB } from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import catalogRoutes from "./routes/catalogRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
+import { seedCatalog } from "./services/catalogService.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -24,5 +25,5 @@ app.use((err, _req, res, _next) => {
 });
 
 const port = Number(process.env.PORT) || 5000;
-connectDB().then(() => app.listen(port, () => console.log(`AUREL API listening on ${port}`)))
+connectDB().then(seedCatalog).then(() => app.listen(port, () => console.log(`AUREL API listening on ${port}`)))
   .catch(error => { console.error("API startup failed:", error.message); process.exit(1); });
