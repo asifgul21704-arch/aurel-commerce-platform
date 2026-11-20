@@ -22,4 +22,4 @@ jobs:
         with:
           node-version: 20
       - run: cd backend && npm install --no-audit --no-fund
-      - run: cd backend && node --check src/server.js && node --check src/controllers/authController.js && node --check src/routes/paymentRoutes.js
+      - run: cd backend && find src -name "*.js" -print0 | xargs -0 -n1 node --check
