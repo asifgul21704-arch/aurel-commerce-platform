@@ -24,7 +24,7 @@ app.disable("x-powered-by");
 app.use(helmet());
 app.use(cors({
   origin: (process.env.CLIENT_ORIGIN || "http://localhost:5173").split(",").map(value => value.trim()),
-  methods: ["GET", "POST", "PATCH", "DELETE"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 app.use(express.json({ limit: "32kb" }));
@@ -48,9 +48,9 @@ app.get("/api/health", (_req, res) => res.json({
 
 app.use((err, _req, res, _next) => {
   console.error("Request failed:", err);
-  const status = Number.isInteger(err.statusCode) ? err.statusCode : 500;
+  const status = Number.isInteger(err.statusCode) ? err.statusCode : Number.isInteger(err.status) ? err.status : err.code === 11000 ? 409 : err.name === "ValidationError" ? 400 : err.name === "CastError" ? 400 : 500;
   res.status(status).json({
-    message: status >= 500 ? "Something went wrong. Please try again." : err.message
+    message: status >= 500 ? "Something went wrong. Please try again." : status === 409 ? "This record already exists." : err.message || "The request could not be completed."
   });
 });
 

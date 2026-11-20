@@ -17,10 +17,11 @@ const checkoutLimit = rateLimit({
 
 // Demo only: no card details are collected and no external payment processor is contacted.
 router.post("/demo-checkout", checkoutLimit, requireAuth, safe(async (req, res) => {
-  const requested = Array.isArray(req.body.items) ? req.body.items : [];
+  const body = req.body && typeof req.body === "object" && !Array.isArray(req.body) ? req.body : {};
+  const requested = Array.isArray(body.items) ? body.items : [];
   if (!requested.length || requested.length > 30) return res.status(400).json({ message: "Your bag is empty or contains too many lines." });
 
-  const shippingInput = req.body.shipping || {};
+  const shippingInput = body.shipping && typeof body.shipping === "object" && !Array.isArray(body.shipping) ? body.shipping : {};
   const shipping = {
     fullName: String(shippingInput.fullName || "").trim(),
     email: String(shippingInput.email || "").trim().toLowerCase(),
@@ -37,6 +38,7 @@ router.post("/demo-checkout", checkoutLimit, requireAuth, safe(async (req, res) 
   const normalized = [];
   const currencies = new Set();
   for (const item of requested) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return res.status(400).json({ message: "Each order line must be a valid product selection." });
     const product = await Product.findOne({ productId: String(item.productId || ""), isActive: true }).lean();
     const quantity = Number(item.quantity);
     if (!Number.isInteger(quantity) || quantity < 1 || quantity > 20) return res.status(400).json({ message: "Each item quantity must be a whole number from 1 to 20." });
@@ -56,7 +58,7 @@ router.post("/demo-checkout", checkoutLimit, requireAuth, safe(async (req, res) 
   if (currencies.size !== 1) return res.status(400).json({ message: "Please check out one currency at a time. Separate EUR and USD items into different demo orders." });
   const currency = [...currencies][0];
   const total = Number(normalized.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2));
-  const outcome = req.body.demoOutcome === "failed" ? "failed" : "succeeded";
+  const outcome = body.demoOutcome === "failed" ? "failed" : "succeeded";
   const order = await Order.create({
     customer: req.user._id,
     items: normalized,
@@ -64,7 +66,7 @@ router.post("/demo-checkout", checkoutLimit, requireAuth, safe(async (req, res) 
     total,
     currency,
     payment: {
-      method: req.body.method === "demo-wallet" ? "demo-wallet" : "demo-card",
+      method: body.method === "demo-wallet" ? "demo-wallet" : "demo-card",
       status: outcome,
       reference: `AUREL-DEMO-${randomUUID().slice(0, 8).toUpperCase()}`
     },
@@ -83,7 +85,7 @@ router.get("/admin/orders", requireAuth, allowRoles("admin", "owner"), safe(asyn
 
 router.patch("/admin/orders/:id/status", requireAuth, allowRoles("admin", "owner"), safe(async (req, res) => {
   const allowed = ["pending", "processing", "completed", "cancelled"];
-  if (!allowed.includes(req.body.status)) return res.status(400).json({ message: "Invalid order status." });
+  if (!allowed.includes(req.body?.status)) return res.status(400).json({ message: "Invalid order status." });
   const order = await Order.findByIdAndUpdate(req.params.id, { status: req.body.status }, { new: true }).populate("customer", "name email");
   if (!order) return res.status(404).json({ message: "Order not found." });
   res.json({ order });

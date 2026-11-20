@@ -26,6 +26,12 @@ const looks = [
 
 const money = (value,currency="USD") => new Intl.NumberFormat("en-US",{style:"currency",currency,maximumFractionDigits:2}).format(Number(value));
 
+async function readApiResponse(response, fallback="The request could not be completed.") {
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.message || fallback);
+  return data;
+}
+
 function App(){
   const [user,setUser]=useState(()=>{try{return JSON.parse(localStorage.getItem("aurel-user"))}catch{return null}});
   const [token,setToken]=useState(()=>localStorage.getItem("aurel-token"));
@@ -52,23 +58,29 @@ function App(){
       fetch(`${API}/account/me`,{headers:{Authorization:`Bearer ${token}`}}).then(async response=>{const data=await response.json();if(!response.ok)throw new Error(data.message||"Unable to load your saved bag.");return data}),
       fetch(`${API}/catalog`).then(async response=>{const data=await response.json();if(!response.ok)throw new Error(data.message||"Unable to load the catalog.");return data})
     ])
-      .then(([account,catalog])=>{if(!active)return;const byId=new Map((catalog.products||[]).map(product=>[product.productId,product]));setCart((account.cartItems||[]).map(item=>({...byId.get(item.productId),...item,id:item.productId})).filter(item=>item.name));setSaved(account.savedProductIds||[]);setCommerceOwner(token);setCommerceReady(true)})
-      .catch(()=>{if(active)setCommerceReady(true)});
+      .then(([account,catalog])=>{if(!active)return;const byId=new Map((catalog.products||[]).map(product=>[product.productId,product]));const restored=(account.cartItems||[]).map(item=>({...byId.get(item.productId),...item,id:item.productId})).filter(item=>item.name);setCart(previous=>{const merged=[...restored];for(const guestItem of previous){const match=merged.find(item=>item.id===guestItem.id&&item.size===guestItem.size&&item.color===guestItem.color);if(match)match.quantity=Math.min(20,match.quantity+guestItem.quantity);else if(merged.length<30&&guestItem.name)merged.push(guestItem)}return merged});setSaved(previous=>[...new Set([...(account.savedProductIds||[]),...previous])].slice(0,100));setCommerceOwner(token);setCommerceReady(true)})
+      .catch(error=>{if(active){setCommerceReady(true);notify(error.message||"Your saved bag could not be loaded. Please try again.")}});
     return()=>{active=false};
   },[token]);
   useEffect(()=>{
     if(!token||!commerceReady||commerceOwner!==token)return;
     const items=cart.map(({id,productId,quantity,size,color})=>({productId:productId||id,quantity,size,color}));
-    fetch(`${API}/account/cart`,{method:"PUT",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({items})}).catch(()=>notify("Your bag could not sync. Please check your connection."));
+    fetch(`${API}/account/cart`,{method:"PUT",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({items})}).then(response=>readApiResponse(response,"Your bag could not be saved.")).catch(()=>notify("Your bag could not sync. Please check your connection."));
   },[cart,token,commerceReady,commerceOwner]);
-  const updateSaved=updater=>{
-    const next=typeof updater==="function"?updater(saved):updater;
-    setSaved(next);
-    if(token)fetch(`${API}/account/wishlist`,{method:"PUT",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({productIds:next})})
-      .then(async response=>{if(!response.ok){const data=await response.json();throw new Error(data.message||"Wishlist could not sync.")}})
-      .catch(()=>notify("Wishlist could not sync. Please sign in again."));
+  useEffect(()=>{
+    if(!token||!commerceReady||commerceOwner!==token)return;
+    fetch(`${API}/account/wishlist`,{method:"PUT",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({productIds:saved})})
+      .then(response=>readApiResponse(response,"Wishlist could not be saved."))
+      .catch(()=>notify("Wishlist could not sync. Please check your connection."));
+  },[saved,token,commerceReady,commerceOwner]);
+  const add=(product)=>{
+    const same=p=>p.id===product.id&&p.size===product.size&&p.color===product.color;
+    const existing=cart.find(same);
+    if(existing&&existing.quantity>=20){notify("Maximum quantity is 20 per product selection.");return}
+    if(!existing&&cart.length>=30){notify("Your bag can contain up to 30 different selections.");return}
+    setCart(old=>{const found=old.find(same);return found?old.map(p=>same(p)?{...p,quantity:Math.min(20,p.quantity+1)}:p):[...old,{...product,quantity:1}]});
+    notify(`${product.name} added to your bag`);
   };
-  const add=(product)=>{setCart(old=>{const same=p=>p.id===product.id&&p.size===product.size&&p.color===product.color;const found=old.find(same);return found?old.map(p=>same(p)?{...p,quantity:p.quantity+1}:p):[...old,{...product,quantity:1}]});notify(`${product.name} added to your bag`)};
   const signOut=()=>{localStorage.removeItem("aurel-token");localStorage.removeItem("aurel-user");setToken(null);setUser(null);setCart([]);setSaved([]);setCommerceReady(false);setCommerceOwner("");navigate("/")};
   const auth={user,token,setUser,setToken,notify};
   return <div className="app-shell">
@@ -140,7 +152,7 @@ function Home({add,saved,setSaved,notify}){
 function AuthPage({mode,auth}){
   const signup=mode==="signup";const [form,setForm]=useState({name:"",email:"",password:""});const [error,setError]=useState("");const [busy,setBusy]=useState(false);const navigate=useNavigate();
   const change=e=>setForm({...form,[e.target.name]:e.target.value});
-  const submit=async e=>{e.preventDefault();setError("");setBusy(true);try{const response=await fetch(`${API}/auth/${signup?"signup":"login"}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(form)});const data=await response.json();if(!response.ok)throw new Error(data.message||"Unable to sign in");localStorage.setItem("aurel-token",data.token);localStorage.setItem("aurel-user",JSON.stringify(data.user));auth.setToken(data.token);auth.setUser(data.user);auth.notify("Welcome to AUREL");navigate(data.user.role==="owner"?"/owner":data.user.role==="admin"?"/admin":(sessionStorage.getItem("aurel-checkout")?"/checkout":"/account"));}catch(err){setError(err.message)}finally{setBusy(false)}};
+  const submit=async e=>{e.preventDefault();setError("");setBusy(true);try{const response=await fetch(`${API}/auth/${signup?"signup":"login"}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(form)});const data=await readApiResponse(response,"Unable to sign in. Please try again.");localStorage.setItem("aurel-token",data.token);localStorage.setItem("aurel-user",JSON.stringify(data.user));auth.setToken(data.token);auth.setUser(data.user);auth.notify("Welcome to AUREL");navigate(data.user.role==="owner"?"/owner":data.user.role==="admin"?"/admin":(sessionStorage.getItem("aurel-checkout")?"/checkout":"/account"));}catch(err){setError(err.message)}finally{setBusy(false)}};
   return <main className="auth-layout"><div className="auth-visual"><span className="eyebrow">AUREL MEMBERSHIP</span><h1>A world of<br/><i>your own.</i></h1><p>Save your favourites, keep your edits and make every discovery yours.</p><div className="auth-image"><img src={looks[1].image} alt="AUREL styling look"/></div></div><div className="auth-form-wrap"><div className="auth-form"><span className="eyebrow">{signup?"CREATE YOUR ACCOUNT":"WELCOME BACK"}</span><h2>{signup?"Join the edit.":"Sign in."}</h2><p>{signup?"Create an account to save looks and manage your orders.":"Your AUREL world is right where you left it."}</p><form onSubmit={submit}>{signup&&<label>Full name<input name="name" value={form.name} onChange={change} autoComplete="name" required minLength="2"/></label>}<label>Email address<input name="email" type="email" value={form.email} onChange={change} autoComplete="email" required/></label><label>Password<input name="password" type="password" value={form.password} onChange={change} autoComplete={signup?"new-password":"current-password"} required minLength={signup?10:1}/>{signup&&<small>Use at least 10 characters.</small>}</label>{error&&<div className="form-error">{error}</div>}<button className="dark-button" disabled={busy}>{busy?"PLEASE WAIT…":signup?"CREATE ACCOUNT":"SIGN IN"} <ArrowRight size={16}/></button></form><div className="auth-switch">{signup?"Already part of AUREL?":"New to AUREL?"} <Link to={signup?"/login":"/signup"}>{signup?"Sign in":"Create an account"}</Link></div><small className="secure-note"><LockKeyhole size={13}/> Your password is securely hashed by the AUREL API.</small></div></div></main>;
 }
 
@@ -156,7 +168,7 @@ function DemoCheckoutPage({user,token,onCheckoutComplete}){
   const navigate=useNavigate();
 
   useEffect(()=>{
-    fetch(API+"/catalog").then(r=>r.json()).then(d=>setCatalog(d.products||[])).catch(()=>setError("The catalog could not be loaded. Please try again."));
+    fetch(API+"/catalog").then(r=>readApiResponse(r,"The catalog could not be loaded.")).then(d=>setCatalog(d.products||[])).catch(err=>setError(err.message));
   },[]);
 
   const lines=items.map(item=>{
@@ -176,8 +188,7 @@ function DemoCheckoutPage({user,token,onCheckoutComplete}){
         headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},
         body:JSON.stringify({items,method,shipping,demoOutcome:outcome==="failed"?"failed":"succeeded"})
       });
-      const data=await response.json();
-      if(!response.ok)throw new Error(data.message||"Demo checkout could not be completed.");
+      const data=await readApiResponse(response,"Demo checkout could not be completed.");
       setResult(data);
       if(outcome==="succeeded"){
         sessionStorage.removeItem("aurel-checkout");
@@ -242,14 +253,20 @@ function DemoCheckoutPage({user,token,onCheckoutComplete}){
 function AccountPage({user,token,signOut}){
   const [orders,setOrders]=useState([]);
   const [wishlist,setWishlist]=useState([]);
+  const [loadError,setLoadError]=useState("");
   useEffect(()=>{
-    if(token)fetch(API+"/payments/my-orders",{headers:{Authorization:"Bearer "+token}})
-      .then(r=>r.json()).then(d=>setOrders(d.orders||[])).catch(()=>{});
-    if(token)fetch(API+"/account/wishlist",{headers:{Authorization:"Bearer "+token}})
-      .then(r=>r.json()).then(d=>setWishlist(d.products||[])).catch(()=>{});
+    let active=true;
+    if(!token)return()=>{active=false};
+    Promise.all([
+      fetch(API+"/payments/my-orders",{headers:{Authorization:"Bearer "+token}}).then(r=>readApiResponse(r,"Orders could not be loaded.")),
+      fetch(API+"/account/wishlist",{headers:{Authorization:"Bearer "+token}}).then(r=>readApiResponse(r,"Wishlist could not be loaded."))
+    ]).then(([orderData,wishlistData])=>{if(!active)return;setOrders(orderData.orders||[]);setWishlist(wishlistData.products||[]);setLoadError("")})
+      .catch(error=>{if(active)setLoadError(error.message)});
+    return()=>{active=false};
   },[token]);
   if(!user)return <div className="center-state"><h2>Sign in to view your account.</h2><Link className="dark-button inline" to="/login">Sign in</Link></div>;
   return <main className="dashboard-page">
+    {loadError&&<div className="notice-box" role="alert">{loadError}</div>}
     <div className="dashboard-title"><span className="eyebrow">YOUR AUREL ACCOUNT</span><h1>Hello, <i>{user.name.split(" ")[0]}.</i></h1><p>Keep your saved looks close and your orders in view.</p></div>
     <div className="account-grid">
       <div className="account-card"><small>MEMBER PROFILE</small><UserRound/><h3>{user.name}</h3><p>{user.email}</p><span className="role-pill">{user.role}</span><button className="under-link" onClick={signOut}>Sign out</button></div>
@@ -266,44 +283,40 @@ function Dashboard({user,token,type}){
   const [productForm,setProductForm]=useState({name:"",collection:"",category:"General",price:"",currency:"USD",image:"",description:""});
   const [editingProduct,setEditingProduct]=useState(null),[message,setMessage]=useState("");
   const headers={Authorization:`Bearer ${token}`};
-  const loadOrders=()=>fetch(`${API}/payments/admin/orders`,{headers}).then(r=>r.json()).then(d=>setOrders(d.orders||[])).catch(()=>{});
-  const loadAdmins=()=>fetch(`${API}/auth/admins`,{headers}).then(r=>r.json()).then(d=>setAdmins(d.admins||[])).catch(()=>{});
-  const loadProducts=()=>fetch(`${API}/catalog/admin/products`,{headers}).then(r=>r.json()).then(d=>setProducts(d.products||[])).catch(()=>{});
+  const request=(url,options,fallback)=>fetch(url,options).then(response=>readApiResponse(response,fallback));
+  const loadOrders=()=>request(`${API}/payments/admin/orders`,{headers},"Orders could not be loaded.").then(d=>setOrders(d.orders||[])).catch(error=>setMessage(error.message));
+  const loadAdmins=()=>request(`${API}/auth/admins`,{headers},"Administrator list could not be loaded.").then(d=>setAdmins(d.admins||[])).catch(error=>setMessage(error.message));
+  const loadProducts=()=>request(`${API}/catalog/admin/products`,{headers},"Products could not be loaded.").then(d=>setProducts(d.products||[])).catch(error=>setMessage(error.message));
   useEffect(()=>{
     if(!user||!["admin","owner"].includes(user.role)){setMessage("You do not have access to this dashboard.");return}
-    fetch(`${API}/catalog/admin/summary`,{headers}).then(r=>r.json()).then(setSummary).catch(()=>{});
+    request(`${API}/catalog/admin/summary`,{headers},"Dashboard summary could not be loaded.").then(setSummary).catch(error=>setMessage(error.message));
     loadOrders();loadProducts();
     if(user.role==="owner")loadAdmins();
   },[user,token]);
   const create=async e=>{
     e.preventDefault();setMessage("");
-    const r=await fetch(`${API}/auth/admins`,{method:"POST",headers:{"Content-Type":"application/json",...headers},body:JSON.stringify(form)});
-    const d=await r.json();if(!r.ok){setMessage(d.message);return}
+    const d=await request(`${API}/auth/admins`,{method:"POST",headers:{"Content-Type":"application/json",...headers},body:JSON.stringify(form)},"Admin account could not be created.").catch(error=>{setMessage(error.message);return null});if(!d)return;
     setForm({name:"",email:"",password:""});setMessage("Admin account created.");loadAdmins();
   };
   const saveProduct=async e=>{
     e.preventDefault();setMessage("");
     const url=editingProduct?`${API}/catalog/admin/products/${editingProduct}`:`${API}/catalog/admin/products`;
-    const r=await fetch(url,{method:editingProduct?"PATCH":"POST",headers:{"Content-Type":"application/json",...headers},body:JSON.stringify(productForm)});
-    const d=await r.json();if(!r.ok){setMessage(d.message);return}
+    const d=await request(url,{method:editingProduct?"PATCH":"POST",headers:{"Content-Type":"application/json",...headers},body:JSON.stringify(productForm)},"Product could not be saved.").catch(error=>{setMessage(error.message);return null});if(!d)return;
     setProductForm({name:"",collection:"",category:"General",price:"",currency:"USD",image:"",description:""});setEditingProduct(null);setMessage(editingProduct?"Product updated.":"Product created.");loadProducts();
-    fetch(`${API}/catalog/admin/summary`,{headers}).then(r=>r.json()).then(setSummary).catch(()=>{});
+    request(`${API}/catalog/admin/summary`,{headers},"Dashboard summary could not be loaded.").then(setSummary).catch(error=>setMessage(error.message));
   };
   const editProduct=p=>{setEditingProduct(p._id);setProductForm({name:p.name,collection:p.collection,category:p.category||"General",price:String(p.price),currency:p.currency||"USD",image:p.image||"",description:p.description||""});window.scrollTo({top:document.body.scrollHeight,behavior:"smooth"})};
   const archiveProduct=async p=>{
-    const r=await fetch(`${API}/catalog/admin/products/${p._id}`,{method:"DELETE",headers});
-    const d=await r.json();if(!r.ok){setMessage(d.message);return}
+    const d=await request(`${API}/catalog/admin/products/${p._id}`,{method:"DELETE",headers},"Product could not be archived.").catch(error=>{setMessage(error.message);return null});if(!d)return;
     setMessage(`${p.name} archived.`);loadProducts();
-    fetch(`${API}/catalog/admin/summary`,{headers}).then(r=>r.json()).then(setSummary).catch(()=>{});
+    request(`${API}/catalog/admin/summary`,{headers},"Dashboard summary could not be loaded.").then(setSummary).catch(error=>setMessage(error.message));
   };
   const changeStatus=async(id,status)=>{
-    const r=await fetch(`${API}/payments/admin/orders/${id}/status`,{method:"PATCH",headers:{"Content-Type":"application/json",...headers},body:JSON.stringify({status})});
-    const d=await r.json();if(!r.ok){setMessage(d.message);return}
+    const d=await request(`${API}/payments/admin/orders/${id}/status`,{method:"PATCH",headers:{"Content-Type":"application/json",...headers},body:JSON.stringify({status})},"Order status could not be updated.").catch(error=>{setMessage(error.message);return null});if(!d)return;
     setOrders(old=>old.map(o=>o._id===id?d.order:o));setMessage("Order status updated.");
   };
   const toggleAdmin=async(admin)=>{
-    const r=await fetch(`${API}/auth/admins/${admin._id}`,{method:"PATCH",headers:{"Content-Type":"application/json",...headers},body:JSON.stringify({isActive:!admin.isActive})});
-    const d=await r.json();if(!r.ok){setMessage(d.message);return}
+    const d=await request(`${API}/auth/admins/${admin._id}`,{method:"PATCH",headers:{"Content-Type":"application/json",...headers},body:JSON.stringify({isActive:!admin.isActive})},"Administrator access could not be updated.").catch(error=>{setMessage(error.message);return null});if(!d)return;
     setAdmins(old=>old.map(a=>a._id===admin._id?{...a,isActive:d.isActive}:a));setMessage("Administrator access updated.");
   };
   if(!user||!(type==="owner"?user.role==="owner":["admin","owner"].includes(user.role)))return <main className="center-state"><h2>Restricted area</h2><p>{message||"Sign in with an authorized account."}</p><Link className="dark-button inline" to="/login">Sign in</Link></main>;

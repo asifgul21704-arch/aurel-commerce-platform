@@ -1,4 +1,5 @@
-export function validateProductInput(body, { partial = false } = {}) {
+export function validateProductInput(input, { partial = false } = {}) {
+  const body = input && typeof input === "object" && !Array.isArray(input) ? input : {};
   const has = key => Object.prototype.hasOwnProperty.call(body, key);
   const required = key => !partial || has(key);
 

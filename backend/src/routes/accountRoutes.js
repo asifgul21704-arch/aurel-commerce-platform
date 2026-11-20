@@ -11,9 +11,10 @@ router.get("/me", safe(async (req, res) => {
 }));
 
 router.put("/cart", safe(async (req, res) => {
-  if (!Array.isArray(req.body.items) || req.body.items.length > 30) return res.status(400).json({ message: "Cart must contain no more than 30 items." });
+  if (!Array.isArray(req.body?.items) || req.body.items.length > 30) return res.status(400).json({ message: "Cart must contain no more than 30 items." });
   const items = [];
   for (const item of req.body.items) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return res.status(400).json({ message: "Each cart item must be a valid product selection." });
     const productId = String(item.productId || "").trim();
     const quantity = Number(item.quantity);
     if (!productId || !Number.isInteger(quantity) || quantity < 1 || quantity > 20) return res.status(400).json({ message: "Each cart item needs a valid product and quantity from 1 to 20." });
@@ -26,7 +27,7 @@ router.put("/cart", safe(async (req, res) => {
 }));
 
 router.put("/wishlist", safe(async (req, res) => {
-  if (!Array.isArray(req.body.productIds) || req.body.productIds.length > 100) return res.status(400).json({ message: "Wishlist must contain no more than 100 products." });
+  if (!Array.isArray(req.body?.productIds) || req.body.productIds.length > 100) return res.status(400).json({ message: "Wishlist must contain no more than 100 products." });
   const productIds = [...new Set(req.body.productIds.map(value => String(value).trim()).filter(Boolean))];
   const products = await Product.find({ productId: { $in: productIds }, isActive: true }).select("productId").lean();
   if (products.length !== productIds.length) return res.status(400).json({ message: "One or more saved products are unavailable." });
