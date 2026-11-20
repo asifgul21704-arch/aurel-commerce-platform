@@ -8,14 +8,14 @@ function cropStyle(index,width=210,height=270){
   return {backgroundImage:`url("${SHEET}")`,backgroundRepeat:"no-repeat",backgroundSize:`${2048*sx}px ${1360*sy}px`,backgroundPosition:`${-x*sx}px ${-y*sy}px`};
 }
 export default function OffcutSection({add}){
-  const [active,setActive]=useState(null);
-  const item=active===null?null:offcutItems[active];
-  const step=d=>setActive(i=>(i+d+offcutItems.length)%offcutItems.length);
+  const [active,setActive]=useState(null),[hover,setHover]=useState(null);
+  const item=hover===null?null:offcutItems[hover];
+  const step=d=>{const next=(active+d+offcutItems.length)%offcutItems.length;setActive(next);setHover(next)};
   return <section className="offcut-section" id="offcut">
     <div className="offcut-head"><div><span className="eyebrow">03 — OFFCUT STREETWEAR</span><h2>Made to <i>stand apart.</i></h2></div><span className="offcut-side-note">NO RESTOCKS. NO COMPROMISES.</span></div>
     <div className="offcut-rail">
       <div className="offcut-chrome"/>
-      {offcutItems.map((p,i)=><button key={p.id} className="offcut-garment" style={{left:`${5+i*10}%`}} onMouseEnter={()=>setActive(i)} onFocus={()=>setActive(i)} onClick={()=>setActive(i)} aria-label={`View ${p.name}`}><span className="offcut-art" style={cropStyle(i)}/></button>)}
+      {offcutItems.map((p,i)=><button key={p.id} className="offcut-garment" style={{left:`${5+i*10}%`}} onMouseEnter={()=>setHover(i)} onFocus={()=>setHover(i)} onClick={()=>setActive(i)} aria-label={`View ${p.name}`}><span className="offcut-art" style={cropStyle(i)}/></button>)}
     </div>
     <div className="offcut-caption"><span>{item?item.name:"THE OFFCUT COLLECTION"}</span><span>{item?`€${item.price}`:"TEN PIECES · LIMITED EDITION"}</span></div>
     <div className="offcut-bottom"><span>SELECT A GARMENT TO DISCOVER</span><button className="offcut-view" onClick={()=>setActive(active===null?0:active)}>VIEW THE COLLECTION <ArrowRight size={14}/></button></div>
