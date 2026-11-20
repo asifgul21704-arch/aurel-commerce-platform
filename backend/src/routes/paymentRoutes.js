@@ -18,7 +18,7 @@ router.post("/demo-checkout", requireAuth, async (req, res) => {
     const quantity = Math.max(1, Math.min(20, Number(item.quantity) || 1));
     if (!product) return res.status(400).json({ message: "An item in your bag is no longer available." });
     currencies.add(product.currency || "USD");
-    normalized.push({ productId: product.id, name: product.name, price: product.price, quantity, currency: product.currency || "USD" });
+    normalized.push({ productId: product.id, name: product.name, price: product.price, quantity, currency: product.currency || "USD", size: String(item.size || "").slice(0, 8), color: String(item.color || "").slice(0, 40) });
   }
 
   if (currencies.size !== 1) return res.status(400).json({ message: "Please check out one currency at a time. Separate EUR and USD items into different demo orders." });
