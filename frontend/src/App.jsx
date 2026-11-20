@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, NavLink, Route, Routes, useNavigate } from "react-router-dom";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronDown, Heart, LockKeyhole, Menu, Minus, Plus, ShoppingBag, Sparkles, UserRound, X } from "lucide-react";
+import OffcutSection from "./components/OffcutSection.jsx";
+import VirtualFitSection from "./components/VirtualFitSection.jsx";
+import MaisonSection from "./components/MaisonSection.jsx";
+import RunwaySection from "./components/RunwaySection.jsx";
 
 const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 const CDN = "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2F";
@@ -44,7 +48,7 @@ function App(){
       <button className="icon-button mobile-menu" onClick={()=>setMobileOpen(!mobileOpen)} aria-label="Toggle menu">{mobileOpen?<X/>:<Menu/>}</button>
       <Link className="wordmark" to="/">AUREL<span>®</span></Link>
       <nav className={mobileOpen?"main-nav open":"main-nav"}>
-        <a href="/#collections" onClick={()=>setMobileOpen(false)}>Collections</a><a href="/#vell" onClick={()=>setMobileOpen(false)}>VELL Studio</a><a href="/#blendy" onClick={()=>setMobileOpen(false)}>Blendy</a><a href="/#journal" onClick={()=>setMobileOpen(false)}>Our World</a>
+        <a href="/#collections" onClick={()=>setMobileOpen(false)}>Collections</a><a href="/#vell" onClick={()=>setMobileOpen(false)}>VELL Studio</a><a href="/#offcut" onClick={()=>setMobileOpen(false)}>Offcut</a><a href="/#virtualfit" onClick={()=>setMobileOpen(false)}>VirtualFit</a><a href="/#maison" onClick={()=>setMobileOpen(false)}>Maison Vell</a><a href="/#blendy" onClick={()=>setMobileOpen(false)}>Blendy</a><a href="/#runway" onClick={()=>setMobileOpen(false)}>Runway</a>
       </nav>
       <div className="header-actions">
         {user?<button className="text-action" onClick={()=>navigate(user.role==="owner"?"/owner":user.role==="admin"?"/admin":"/account")}>{user.name.split(" ")[0]}</button>:<Link className="text-action" to="/login">Sign in</Link>}
@@ -89,6 +93,10 @@ function Home({add,saved,setSaved}){
       <div className="filter-row">{["All","Everyday","Athletic","Sleep","Formal","Party","Street"].map(f=><button key={f} className={filter===f?"active":""} onClick={()=>setFilter(f)}>{f}</button>)}<span>{visible.length.toString().padStart(2,"0")} LOOKS</span></div>
       <div className="product-grid">{visible.map((p,i)=><article className="product-card" key={p.id}><div className="product-image"><img src={p.image} alt={p.name}/><span className="product-number">0{looks.indexOf(p)+1}</span><button className={saved.includes(p.id)?"heart-button active":"heart-button"} onClick={()=>toggleSave(p.id)} aria-label="Save look"><Heart size={17}/></button><button className="quick-add" onClick={()=>add(p)}>ADD TO BAG <Plus size={14}/></button></div><div className="product-meta"><div><small>{p.category.toUpperCase()} · VELL STUDIO</small><h3>{p.name}</h3></div><b>{money(p.price)}</b></div></article>)}</div>
     </section>
+    <OffcutSection add={add}/>
+    <VirtualFitSection add={add}/>
+    <MaisonSection add={add}/>
+    <RunwaySection add={add}/>
     <section className="feature-band"><div className="feature-photo"><img src={looks[3].image} alt="Lilac Run look"/></div><div className="feature-copy"><span className="eyebrow">VIRTUAL EXPRESSION · 001</span><h2>Style is a<br/><i>feeling.</i></h2><p>Meet your digital muse. Change a silhouette, discover a mood and save the looks that feel like you.</p><a className="dark-button inline" href="#vell">Explore VELL Studio <ArrowUpRight size={16}/></a></div></section>
     <section className="blendy-section" id="blendy" style={{background:drinks[activeDrink].color}}><div className="blendy-top"><span>02 — BLENDY WELLNESS</span><span>FRESHLY MIXED · ALWAYS BRIGHT</span></div><div className="blendy-main"><div className="blendy-copy"><span className="eyebrow">A LITTLE DAILY JOY</span><h2>Good things<br/>come in <i>blends.</i></h2><p>Four fruit-forward favourites. Find your flavour and make a moment of it.</p><div className="flavour-list">{drinks.map((d,i)=><button key={d.id} className={activeDrink===i?"selected":""} onClick={()=>setActiveDrink(i)}><span>0{i+1}</span>{d.name}<ArrowUpRight size={14}/></button>)}</div><button className="blendy-add" onClick={()=>add(drinks[activeDrink])}>ADD {drinks[activeDrink].name.toUpperCase()} · {money(8)} <Plus size={15}/></button></div><div className="blendy-art"><div className="blendy-word">{drinks[activeDrink].name}</div><img src={drinks[activeDrink].image} alt={drinks[activeDrink].name+" smoothie flavour"}/><div className="blendy-caption">FRUIT. FEELING. FRESHNESS.</div></div></div></section>
     <section className="manifesto" id="journal"><span className="eyebrow">THE AUREL POINT OF VIEW</span><p>Less, but <i>with intention.</i></p><a href="#collections">DISCOVER OUR WORLD <ArrowDown size={14}/></a></section>
