@@ -8,6 +8,7 @@ import RunwaySection from "./components/RunwaySection.jsx";
 import VellStudio from "./components/VellStudio.jsx";
 import ProductQuickView from "./components/ProductQuickView.jsx";
 import BlendySection from "./components/BlendySection.jsx";
+import CustomProductsSection from "./components/CustomProductsSection.jsx";
 import { useCatalog } from "./hooks/useCatalog.js";
 
 const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
@@ -99,6 +100,7 @@ function Home({add,saved,setSaved}){
     <VirtualFitSection add={add}/>
     <MaisonSection add={add}/>
     <RunwaySection add={add}/>
+    <CustomProductsSection add={add}/>
     <section className="feature-band"><div className="feature-photo"><img src={looks[3].image} alt="Lilac Run look"/></div><div className="feature-copy"><span className="eyebrow">VIRTUAL EXPRESSION · 001</span><h2>Style is a<br/><i>feeling.</i></h2><p>Meet your digital muse. Change a silhouette, discover a mood and save the looks that feel like you.</p><a className="dark-button inline" href="#vell">Explore VELL Studio <ArrowUpRight size={16}/></a></div></section>
     <BlendySection notify={notify}/>
     <section className="manifesto" id="journal"><span className="eyebrow">THE AUREL POINT OF VIEW</span><p>Less, but <i>with intention.</i></p><a href="#collections">DISCOVER OUR WORLD <ArrowDown size={14}/></a></section>
