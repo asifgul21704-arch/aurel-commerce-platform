@@ -64,7 +64,7 @@ export default function VellStudio({add}){
  const total=useMemo(()=>priceFor(`vell-${look}`,Object.values(groups[look]).flat().reduce((sum,p)=>sum+p[2],0)),[look,productById]);
  const allLooks=(category==="All"?names.map((_,i)=>i):names.map((_,i)=>i).filter(i=>categoryFor[i]===category)).filter(i=>productById.get(`vell-${i}`)?.isActive!==false);
  const addPiece=(key,j,p)=>{const id=`vell-piece-${look}-${key}-${j}`,product=productById.get(id);if(product?.isActive===false)return;add({id,name:product?.name||p[0],price:product?.price??p[2],currency:product?.currency||"USD",collection:"VELL Studio",image:image(look)})};
- const addLook=()=>{const product=productById.get(`vell-${look}`);if(product?.isActive===false)return;add({id:`vell-${look}`,name:product?.name||names[look],price:product?.price??total,currency:product?.currency||"USD",collection:"VELL Studio",image:image(look)})};
+ const addLook=()=>{const product=productById.get(`vell-${look}`);if(product?.isActive===false)return;add({id:`vell-${look}`,name:product?.name||nameFor(`vell-${look}`,names[look]),price:product?.price??total,currency:product?.currency||"USD",collection:"VELL Studio",image:image(look)})};
  const toggleTrait=t=>setTraitsOn(old=>old.includes(t)?old.filter(x=>x!==t):old.length===3?[...old.slice(1),t]:[...old,t]);
  const save=()=>setSaved(old=>old.includes(look)?old:[...old,look]);
  const reset=()=>{const base={look:0,realism:75,height:168,build:50};setLook(0);setRealism(75);setHeight(168);setBuild(50);setFraming("Full body");commit(base)};
