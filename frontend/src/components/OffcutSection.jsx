@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, X } from "lucide-react";
 import { offcutItems } from "../data/experienceData.js";
+import { useCatalog } from "../hooks/useCatalog.js";
 
 const SHEET="https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261107_130252_7b1b8485-d5c5-440c-8921-f5ae01054c6a.png&w=2048&q=90";
 const ROWY=[80,700];
@@ -29,10 +30,11 @@ function paintGarment(el,index){
 }
 
 export default function OffcutSection({add}){
+ const liveItems=useCatalog(offcutItems);
  const [active,setActive]=useState(null),[hover,setHover]=useState(null);
  const railRefs=useRef([]),detailRef=useRef(null);
- const item=hover===null?null:offcutItems[hover];
- const step=d=>{const next=(active+d+offcutItems.length)%offcutItems.length;setActive(next);setHover(next)};
+ const item=hover===null?null:liveItems[hover];
+ const step=d=>{const next=(active+d+liveItems.length)%offcutItems.length;setActive(next);setHover(next)};
  useEffect(()=>{
   const paintAll=()=>{railRefs.current.forEach((el,i)=>paintGarment(el,i));if(active!==null)paintGarment(detailRef.current,active)};
   paintAll();window.addEventListener("resize",paintAll);return()=>window.removeEventListener("resize",paintAll);
@@ -40,11 +42,11 @@ export default function OffcutSection({add}){
  return <section className="offcut-section" id="offcut">
   <div className="offcut-head"><div><span className="eyebrow">03 — OFFCUT STREETWEAR</span><h2>Made to <i>stand apart.</i></h2></div><span className="offcut-side-note">NO RESTOCKS. NO COMPROMISES.</span></div>
   <div className="offcut-rail"><div className="offcut-chrome"/>
-   {offcutItems.map((p,i)=><button key={p.id} className="offcut-garment" style={{left:`${5+i*10}%`}} onMouseEnter={()=>setHover(i)} onFocus={()=>setHover(i)} onClick={()=>setActive(i)} aria-label={`View ${p.name}`}><span className="offcut-art" ref={el=>railRefs.current[i]=el}/></button>)}
+   {liveItems.map((p,i)=><button key={p.id} className="offcut-garment" style={{left:`${5+i*10}%`}} onMouseEnter={()=>setHover(i)} onFocus={()=>setHover(i)} onClick={()=>setActive(i)} aria-label={`View ${p.name}`}><span className="offcut-art" ref={el=>railRefs.current[i]=el}/></button>)}
   </div>
   <div className="offcut-caption"><span>{item?item.name:"THE OFFCUT COLLECTION"}</span><span>{item?`€${item.price}`:"TEN PIECES · LIMITED EDITION"}</span></div>
   <div className="offcut-bottom"><span>SELECT A GARMENT TO DISCOVER</span><button className="offcut-view" onClick={()=>{setActive(active===null?0:active);setHover(active===null?0:active)}}>VIEW THE COLLECTION <ArrowRight size={14}/></button></div>
-  {active!==null&&<div className="offcut-detail"><button className="offcut-close" onClick={()=>setActive(null)} aria-label="Close"><X size={17}/></button><button className="offcut-step prev" onClick={()=>step(-1)} aria-label="Previous"><ArrowLeft/></button><div className="offcut-detail-art" ref={detailRef}/><div className="offcut-detail-copy"><small>OFFCUT / 0{active+1} — 10</small><h3>{offcutItems[active].name}</h3><strong>€{offcutItems[active].price}</strong><p>Independent streetwear. Considered form, unapologetic character.</p><button className="light-button" onClick={()=>add(offcutItems[active])}>Add to bag <ArrowRight size={15}/></button></div><button className="offcut-step next" onClick={()=>step(1)} aria-label="Next"><ArrowRight/></button></div>}
+  {active!==null&&<div className="offcut-detail"><button className="offcut-close" onClick={()=>setActive(null)} aria-label="Close"><X size={17}/></button><button className="offcut-step prev" onClick={()=>step(-1)} aria-label="Previous"><ArrowLeft/></button><div className="offcut-detail-art" ref={detailRef}/><div className="offcut-detail-copy"><small>OFFCUT / 0{active+1} — 10</small><h3>{liveItems[active].name}</h3><strong>€{offcutItems[active].price}</strong><p>Independent streetwear. Considered form, unapologetic character.</p><button className="light-button" onClick={()=>add(offcutItems[active])}>Add to bag <ArrowRight size={15}/></button></div><button className="offcut-step next" onClick={()=>step(1)} aria-label="Next"><ArrowRight/></button></div>}
   <div className="offcut-marquee">OFFCUT — BUILT DIFFERENT — OFFCUT — BUILT DIFFERENT — OFFCUT — BUILT DIFFERENT —</div>
  </section>;
 }
