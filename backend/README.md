@@ -7,6 +7,11 @@ cp .env.example .env
 npm run dev
 ```
 
+Run the backend validation tests (no MongoDB connection required):
+```bash
+npm test
+```
+
 Set your own `MONGODB_URI` and a strong random `JWT_SECRET` in the local `.env`. Never commit that file.
 
 ## First owner
