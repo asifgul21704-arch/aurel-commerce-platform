@@ -22,4 +22,5 @@ jobs:
         with:
           node-version: 20
       - run: cd backend && npm install --no-audit --no-fund
-      - run: cd backend && find src -name "*.js" -print0 | xargs -0 -n1 node --check
+      - run: cd backend && find src test -name "*.js" -print0 | xargs -0 -n1 node --check
+      - run: cd backend && npm test
