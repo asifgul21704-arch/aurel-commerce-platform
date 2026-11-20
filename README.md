@@ -33,7 +33,7 @@ The customer bag routes to a dedicated checkout screen. Customers can select the
 - Frontend: React, Vite, JavaScript, CSS and Lucide icons.
 - Backend: Node.js, Express and Mongoose.
 - Database: MongoDB.
-- CI: GitHub Actions runs frontend production build and backend syntax checks.
+- CI: GitHub Actions runs the frontend production build, backend JavaScript syntax checks and backend validation unit tests.
 
 ## Repository structure
 
@@ -65,7 +65,8 @@ frontend/
 3. Copy `backend/.env.example` to `backend/.env`; set your own MongoDB URI and a long random JWT secret.
 4. Set `OWNER_NAME`, `OWNER_EMAIL` and a private owner password of at least 14 characters in your local environment, then run `npm run create-owner` once from `backend/`.
 5. Start the API with `npm run dev`.
-6. In a second terminal, enter `frontend/`, run `npm install`, copy `.env.example` to `.env`, then run `npm run dev`.
+6. Run backend unit tests from `backend/` with `npm test` (no database connection is needed for these validation tests).
+7. In a second terminal, enter `frontend/`, run `npm install`, copy `.env.example` to `.env`, then run `npm run dev`.
 
 The API seeds the 74 source-derived fashion catalog products when the MongoDB Product collection is empty. Blendy remains a flavour showcase because its source prompt did not specify a price.
 
@@ -77,4 +78,4 @@ The API seeds the 74 source-derived fashion catalog products when the MongoDB Pr
 
 ## Project status
 
-The integrated source experiences, customer authentication, MongoDB catalog, role-protected admin/owner tools and simulated checkout are committed. GitHub Actions frontend build and backend syntax checks are passing. Live deployment still requires the owner's private database and hosting environment configuration.
+The integrated source experiences, customer authentication, MongoDB catalog, role-protected admin/owner tools and simulated checkout are committed. GitHub Actions now verifies the frontend production build, backend syntax and catalog-validation unit tests. Live deployment still requires the owner's private database and hosting environment configuration. Live deployment still requires the owner's private database and hosting environment configuration.
