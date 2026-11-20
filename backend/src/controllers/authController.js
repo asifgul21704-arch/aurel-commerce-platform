@@ -6,7 +6,9 @@ const publicUser = user => ({ id: user._id, name: user.name, email: user.email, 
 
 function issueToken(user) {
   return jwt.sign({ sub: user._id.toString(), role: user.role }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || "1d"
+    expiresIn: process.env.JWT_EXPIRES_IN || "1d",
+    issuer: "aurel-api",
+    audience: "aurel-client"
   });
 }
 
@@ -15,7 +17,7 @@ export async function signup(req, res) {
   const email = String(req.body.email || "").trim().toLowerCase();
   const password = String(req.body.password || "");
   if (name.length < 2 || name.length > 80) return res.status(400).json({ message: "Enter a name between 2 and 80 characters." });
-  if (!/^\S+@\S+\.\S+$/.test(email)) return res.status(400).json({ message: "Enter a valid email address." });
+  if (!/^\S+@\S+\.\S+$/.test(email) || email.length > 254) return res.status(400).json({ message: "Enter a valid email address." });
   if (password.length < 10 || password.length > 128) return res.status(400).json({ message: "Password must be 10–128 characters." });
   if (await User.exists({ email })) return res.status(409).json({ message: "An account with this email already exists." });
   const passwordHash = await bcrypt.hash(password, 12);
@@ -41,8 +43,8 @@ export async function createAdmin(req, res) {
   const name = String(req.body.name || "").trim();
   const email = String(req.body.email || "").trim().toLowerCase();
   const password = String(req.body.password || "");
-  if (name.length < 2 || !/^\S+@\S+\.\S+$/.test(email) || password.length < 12) {
-    return res.status(400).json({ message: "Provide a valid name, email and password of at least 12 characters." });
+  if (name.length < 2 || name.length > 80 || !/^\S+@\S+\.\S+$/.test(email) || password.length < 12 || password.length > 128) {
+    return res.status(400).json({ message: "Provide a valid name, email and password of 12–128 characters." });
   }
   if (await User.exists({ email })) return res.status(409).json({ message: "That email is already registered." });
   const passwordHash = await bcrypt.hash(password, 12);
@@ -56,9 +58,10 @@ export async function listAdmins(_req, res) {
 }
 
 export async function setAdminStatus(req, res) {
+  if (typeof req.body.isActive !== "boolean") return res.status(400).json({ message: "isActive must be true or false." });
   const admin = await User.findOne({ _id: req.params.id, role: "admin" });
   if (!admin) return res.status(404).json({ message: "Administrator not found." });
-  admin.isActive = Boolean(req.body.isActive);
+  admin.isActive = req.body.isActive;
   await admin.save();
   res.json({ user: publicUser(admin), isActive: admin.isActive });
 }
