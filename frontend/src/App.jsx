@@ -124,10 +124,43 @@ function AccountPage({user,token,signOut,onCheckoutComplete}){
 }
 
 function Dashboard({user,token,type}){
-  const [summary,setSummary]=useState(null);const [admins,setAdmins]=useState([]);const [form,setForm]=useState({name:"",email:"",password:""});const [message,setMessage]=useState("");
-  useEffect(()=>{if(!user||!["admin","owner"].includes(user.role)){setMessage("You do not have access to this dashboard.");return}fetch(`${API}/catalog/admin/summary`,{headers:{Authorization:`Bearer ${token}`}}).then(r=>r.json()).then(setSummary).catch(()=>{});},[user,token]);
-  const create=async e=>{e.preventDefault();setMessage("");const r=await fetch(`${API}/auth/admins`,{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify(form)});const d=await r.json();if(!r.ok){setMessage(d.message);return}setAdmins(old=>[...old,d.user]);setForm({name:"",email:"",password:""});setMessage("Admin account created.");};
+  const [summary,setSummary]=useState(null),[admins,setAdmins]=useState([]),[orders,setOrders]=useState([]);
+  const [form,setForm]=useState({name:"",email:"",password:""}),[message,setMessage]=useState("");
+  const headers={Authorization:`Bearer ${token}`};
+  const loadOrders=()=>fetch(`${API}/payments/admin/orders`,{headers}).then(r=>r.json()).then(d=>setOrders(d.orders||[])).catch(()=>{});
+  const loadAdmins=()=>fetch(`${API}/auth/admins`,{headers}).then(r=>r.json()).then(d=>setAdmins(d.admins||[])).catch(()=>{});
+  useEffect(()=>{
+    if(!user||!["admin","owner"].includes(user.role)){setMessage("You do not have access to this dashboard.");return}
+    fetch(`${API}/catalog/admin/summary`,{headers}).then(r=>r.json()).then(setSummary).catch(()=>{});
+    loadOrders();
+    if(user.role==="owner")loadAdmins();
+  },[user,token]);
+  const create=async e=>{
+    e.preventDefault();setMessage("");
+    const r=await fetch(`${API}/auth/admins`,{method:"POST",headers:{"Content-Type":"application/json",...headers},body:JSON.stringify(form)});
+    const d=await r.json();if(!r.ok){setMessage(d.message);return}
+    setForm({name:"",email:"",password:""});setMessage("Admin account created.");loadAdmins();
+  };
+  const changeStatus=async(id,status)=>{
+    const r=await fetch(`${API}/payments/admin/orders/${id}/status`,{method:"PATCH",headers:{"Content-Type":"application/json",...headers},body:JSON.stringify({status})});
+    const d=await r.json();if(!r.ok){setMessage(d.message);return}
+    setOrders(old=>old.map(o=>o._id===id?d.order:o));setMessage("Order status updated.");
+  };
+  const toggleAdmin=async(admin)=>{
+    const r=await fetch(`${API}/auth/admins/${admin._id}`,{method:"PATCH",headers:{"Content-Type":"application/json",...headers},body:JSON.stringify({isActive:!admin.isActive})});
+    const d=await r.json();if(!r.ok){setMessage(d.message);return}
+    setAdmins(old=>old.map(a=>a._id===admin._id?{...a,isActive:d.isActive}:a));setMessage("Administrator access updated.");
+  };
   if(!user||!(type==="owner"?user.role==="owner":["admin","owner"].includes(user.role)))return <main className="center-state"><h2>Restricted area</h2><p>{message||"Sign in with an authorized account."}</p><Link className="dark-button inline" to="/login">Sign in</Link></main>;
-  return <main className="dashboard-page"><div className="dashboard-title"><span className="eyebrow">{type==="owner"?"OWNER CONTROL ROOM":"ADMINISTRATION"}</span><h1>{type==="owner"?"Steward the":"Manage the"} <i>details.</i></h1><p>Welcome, {user.name}. This secure workspace is separate from the customer storefront.</p></div><div className="stats-grid"><div className="stat-card"><small>CATALOG ITEMS</small><strong>{summary?.products??"—"}</strong><span>Across all collections</span></div><div className="stat-card"><small>COLLECTIONS</small><strong>{summary?.collections??"—"}</strong><span>Fashion and wellness</span></div><div className="stat-card"><small>ACCESS LEVEL</small><strong>{user.role.toUpperCase()}</strong><span>Protected role permissions</span></div></div><div className="admin-workspace"><div><span className="eyebrow">COMMERCE OPERATIONS</span><h2>Catalog & orders</h2><p>The catalog API is connected. Product editing, order operations and audit history are the next implementation stage.</p></div>{type==="owner"&&<div className="create-admin"><span className="eyebrow">OWNER ONLY</span><h2>Create an administrator</h2><form onSubmit={create}><input placeholder="Admin full name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} required/><input type="email" placeholder="Admin email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} required/><input type="password" placeholder="Temporary password (12+ characters)" minLength="12" value={form.password} onChange={e=>setForm({...form,password:e.target.value})} required/><button className="dark-button">Create admin <Plus size={15}/></button></form>{message&&<small>{message}</small>}{admins.map(a=><div className="admin-row" key={a.id}>{a.name}<span>{a.email}</span></div>)}</div>}</div></main>;
+  return <main className="dashboard-page">
+    <div className="dashboard-title"><span className="eyebrow">{type==="owner"?"OWNER CONTROL ROOM":"ADMINISTRATION"}</span><h1>{type==="owner"?"Steward the":"Manage the"} <i>details.</i></h1><p>Welcome, {user.name}. This secure workspace is separate from the customer storefront.</p></div>
+    {message&&<div className="notice-box">{message}</div>}
+    <div className="stats-grid"><div className="stat-card"><small>CATALOG ITEMS</small><strong>{summary?.products??"—"}</strong><span>Across all collections</span></div><div className="stat-card"><small>COLLECTIONS</small><strong>{summary?.collections??"—"}</strong><span>Fashion and wellness</span></div><div className="stat-card"><small>ORDERS LOADED</small><strong>{orders.length}</strong><span>Latest 100 orders</span></div></div>
+    <section className="admin-orders"><div className="admin-section-title"><div><span className="eyebrow">ORDER MANAGEMENT</span><h2>Recent orders</h2></div><button className="under-link" onClick={loadOrders}>Refresh orders</button></div>
+      {orders.length?<div className="orders-table"><div className="orders-table-head"><span>ORDER / CUSTOMER</span><span>DATE</span><span>TOTAL</span><span>PAYMENT</span><span>STATUS</span></div>{orders.map(order=><div className="orders-table-row" key={order._id}><div><b>{order.payment?.reference||order._id.slice(-8)}</b><small>{order.customer?.name||"Customer"} · {order.customer?.email||"—"}</small></div><span>{new Date(order.createdAt).toLocaleDateString()}</span><b>{money(order.total,order.currency||"USD")}</b><span>{order.payment?.status||"—"}</span><select value={order.status} onChange={e=>changeStatus(order._id,e.target.value)}><option value="pending">Pending</option><option value="processing">Processing</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></div>)}</div>:<p className="admin-empty">No demo orders yet. Orders will appear here after a customer completes checkout.</p>}
+    </section>
+    {type==="owner"&&<section className="admin-owner-grid"><div className="create-admin"><span className="eyebrow">OWNER ONLY</span><h2>Create an administrator</h2><form onSubmit={create}><input placeholder="Admin full name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} required/><input type="email" placeholder="Admin email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} required/><input type="password" placeholder="Temporary password (12+ characters)" minLength="12" value={form.password} onChange={e=>setForm({...form,password:e.target.value})} required/><button className="dark-button">Create admin <Plus size={15}/></button></form></div><div className="admin-directory"><span className="eyebrow">OWNER ONLY</span><h2>Administrator access</h2>{admins.length?admins.map(a=><div className="admin-row" key={a._id}><div><b>{a.name}</b><span>{a.email}</span></div><button className={a.isActive?"access-on":"access-off"} onClick={()=>toggleAdmin(a)}>{a.isActive?"ACTIVE":"SUSPENDED"}</button></div>):<p>No administrators created yet.</p>}</div></section>}
+    <p className="demo-disclaimer">All checkout activity is simulated. No real payment provider or customer card data is connected.</p>
+  </main>;
 }
 export default App;
