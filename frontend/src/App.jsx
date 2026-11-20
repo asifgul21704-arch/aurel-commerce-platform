@@ -29,8 +29,9 @@ const money = (value,currency="USD") => new Intl.NumberFormat("en-US",{style:"cu
 function App(){
   const [user,setUser]=useState(()=>{try{return JSON.parse(localStorage.getItem("aurel-user"))}catch{return null}});
   const [token,setToken]=useState(()=>localStorage.getItem("aurel-token"));
-  const [cart,setCart]=useState([]);
-  const [saved,setSaved]=useState([]);
+  const [cart,setCart]=useState(()=>{try{return JSON.parse(localStorage.getItem("aurel-cart")||"[]")}catch{return[]}});
+  const [saved,setSaved]=useState(()=>{try{return JSON.parse(localStorage.getItem("aurel-saved")||"[]")}catch{return[]}});
+  const [commerceReady,setCommerceReady]=useState(false);
   const [bagOpen,setBagOpen]=useState(false);
   const [notice,setNotice]=useState("");
   const [mobileOpen,setMobileOpen]=useState(false);
@@ -40,8 +41,32 @@ function App(){
   const canCheckout=cartCurrencies.length===1;
   const count=cart.reduce((s,p)=>s+p.quantity,0);
   const notify=message=>{setNotice(message);window.setTimeout(()=>setNotice(""),2600)};
+  useEffect(()=>{localStorage.setItem("aurel-cart",JSON.stringify(cart))},[cart]);
+  useEffect(()=>{localStorage.setItem("aurel-saved",JSON.stringify(saved))},[saved]);
+  useEffect(()=>{
+    let active=true;
+    if(!token){setCommerceReady(true);return()=>{active=false}};
+    setCommerceReady(false);
+    fetch(`${API}/account/me`,{headers:{Authorization:`Bearer ${token}`}})
+      .then(async response=>{const data=await response.json();if(!response.ok)throw new Error(data.message||"Unable to load your saved bag.");return data})
+      .then(data=>{if(!active)return;setCart((data.cartItems||[]).map(item=>({...item,id:item.productId})));setSaved(data.savedProductIds||[]);setCommerceReady(true)})
+      .catch(()=>{if(active)setCommerceReady(true)});
+    return()=>{active=false};
+  },[token]);
+  useEffect(()=>{
+    if(!token||!commerceReady)return;
+    const items=cart.map(({id,productId,quantity,size,color})=>({productId:productId||id,quantity,size,color}));
+    fetch(`${API}/account/cart`,{method:"PUT",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({items})}).catch(()=>notify("Your bag could not sync. Please check your connection."));
+  },[cart,token,commerceReady]);
+  const updateSaved=updater=>setSaved(previous=>{
+    const next=typeof updater==="function"?updater(previous):updater;
+    if(token)fetch(`${API}/account/wishlist`,{method:"PUT",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({productIds:next})})
+      .then(async response=>{if(!response.ok){const data=await response.json();throw new Error(data.message||"Wishlist could not sync.")}})
+      .catch(()=>notify("Wishlist could not sync. Please sign in again."));
+    return next;
+  });
   const add=(product)=>{setCart(old=>{const same=p=>p.id===product.id&&p.size===product.size&&p.color===product.color;const found=old.find(same);return found?old.map(p=>same(p)?{...p,quantity:p.quantity+1}:p):[...old,{...product,quantity:1}]});notify(`${product.name} added to your bag`)};
-  const signOut=()=>{localStorage.removeItem("aurel-token");localStorage.removeItem("aurel-user");setToken(null);setUser(null);navigate("/")};
+  const signOut=()=>{localStorage.removeItem("aurel-token");localStorage.removeItem("aurel-user");setToken(null);setUser(null);setCommerceReady(false);navigate("/")};
   const auth={user,token,setUser,setToken,notify};
   return <div className="app-shell">
     <div className="announcement">COMPLIMENTARY SHIPPING ON ORDERS OVER $150 <span>—</span> DISCOVER THE NEW EDIT</div>
@@ -59,7 +84,7 @@ function App(){
       </div>
     </header>
     <Routes>
-      <Route path="/" element={<Home add={add} saved={saved} setSaved={setSaved} notify={notify}/>}/>
+      <Route path="/" element={<Home add={add} saved={saved} setSaved={updateSaved} notify={notify}/>}/>
       <Route path="/login" element={<AuthPage mode="login" auth={auth}/>}/>
       <Route path="/signup" element={<AuthPage mode="signup" auth={auth}/>}/>
       <Route path="/checkout" element={<DemoCheckoutPage user={user} token={token} onCheckoutComplete={()=>setCart([])}/>}/>
