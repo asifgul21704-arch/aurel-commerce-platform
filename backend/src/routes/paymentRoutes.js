@@ -2,7 +2,7 @@ import { Router } from "express";
 import { randomUUID } from "node:crypto";
 import Order from "../models/Order.js";
 import { requireAuth, allowRoles } from "../middleware/auth.js";
-import { catalog } from "../data/catalog.js";
+import Product from "../models/Product.js";
 
 const router = Router();
 
@@ -14,11 +14,11 @@ router.post("/demo-checkout", requireAuth, async (req, res) => {
   const normalized = [];
   const currencies = new Set();
   for (const item of requested) {
-    const product = catalog.find(entry => entry.id === String(item.productId || ""));
+    const product = await Product.findOne({ productId: String(item.productId || ""), isActive: true }).lean();
     const quantity = Math.max(1, Math.min(20, Number(item.quantity) || 1));
     if (!product) return res.status(400).json({ message: "An item in your bag is no longer available." });
     currencies.add(product.currency || "USD");
-    normalized.push({ productId: product.id, name: product.name, price: product.price, quantity, currency: product.currency || "USD", size: String(item.size || "").slice(0, 8), color: String(item.color || "").slice(0, 40) });
+    normalized.push({ productId: product.productId, name: product.name, price: product.price, quantity, currency: product.currency || "USD", size: String(item.size || "").slice(0, 8), color: String(item.color || "").slice(0, 40) });
   }
 
   if (currencies.size !== 1) return res.status(400).json({ message: "Please check out one currency at a time. Separate EUR and USD items into different demo orders." });
