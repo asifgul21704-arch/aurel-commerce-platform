@@ -32,6 +32,7 @@ function App(){
   const [cart,setCart]=useState(()=>{try{return JSON.parse(localStorage.getItem("aurel-cart")||"[]")}catch{return[]}});
   const [saved,setSaved]=useState(()=>{try{return JSON.parse(localStorage.getItem("aurel-saved")||"[]")}catch{return[]}});
   const [commerceReady,setCommerceReady]=useState(false);
+  const [commerceOwner,setCommerceOwner]=useState("");
   const [bagOpen,setBagOpen]=useState(false);
   const [notice,setNotice]=useState("");
   const [mobileOpen,setMobileOpen]=useState(false);
@@ -45,19 +46,19 @@ function App(){
   useEffect(()=>{localStorage.setItem("aurel-saved",JSON.stringify(saved))},[saved]);
   useEffect(()=>{
     let active=true;
-    if(!token){setCommerceReady(true);return()=>{active=false}};
+    if(!token){setCommerceReady(true);setCommerceOwner("");return()=>{active=false}};
     setCommerceReady(false);
     fetch(`${API}/account/me`,{headers:{Authorization:`Bearer ${token}`}})
       .then(async response=>{const data=await response.json();if(!response.ok)throw new Error(data.message||"Unable to load your saved bag.");return data})
-      .then(data=>{if(!active)return;setCart((data.cartItems||[]).map(item=>({...item,id:item.productId})));setSaved(data.savedProductIds||[]);setCommerceReady(true)})
+      .then(data=>{if(!active)return;setCart((data.cartItems||[]).map(item=>({...item,id:item.productId})));setSaved(data.savedProductIds||[]);setCommerceOwner(token);setCommerceReady(true)})
       .catch(()=>{if(active)setCommerceReady(true)});
     return()=>{active=false};
   },[token]);
   useEffect(()=>{
-    if(!token||!commerceReady)return;
+    if(!token||!commerceReady||commerceOwner!==token)return;
     const items=cart.map(({id,productId,quantity,size,color})=>({productId:productId||id,quantity,size,color}));
     fetch(`${API}/account/cart`,{method:"PUT",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({items})}).catch(()=>notify("Your bag could not sync. Please check your connection."));
-  },[cart,token,commerceReady]);
+  },[cart,token,commerceReady,commerceOwner]);
   const updateSaved=updater=>setSaved(previous=>{
     const next=typeof updater==="function"?updater(previous):updater;
     if(token)fetch(`${API}/account/wishlist`,{method:"PUT",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({productIds:next})})
@@ -78,7 +79,7 @@ function App(){
       </nav>
       <div className="header-actions">
         {user?<button className="text-action" onClick={()=>navigate(user.role==="owner"?"/owner":user.role==="admin"?"/admin":"/account")}>{user.name.split(" ")[0]}</button>:<Link className="text-action" to="/login">Sign in</Link>}
-        <button className="icon-button saved-action" onClick={()=>notify(`${saved.length} saved looks`)} aria-label="Saved looks"><Heart size={18}/></button>
+        <button className="icon-button saved-action" onClick={()=>navigate(user?"/account#saved":"/login")} aria-label="Saved looks"><Heart size={18}/></button>
         <button className="bag-trigger" onClick={()=>setBagOpen(true)}><ShoppingBag size={17}/> <span>Bag ({count})</span></button>
         {user&&<button className="text-action signout" onClick={signOut}>Sign out</button>}
       </div>
@@ -236,7 +237,7 @@ function AccountPage({user,token,signOut}){
     <div className="dashboard-title"><span className="eyebrow">YOUR AUREL ACCOUNT</span><h1>Hello, <i>{user.name.split(" ")[0]}.</i></h1><p>Keep your saved looks close and your orders in view.</p></div>
     <div className="account-grid">
       <div className="account-card"><small>MEMBER PROFILE</small><UserRound/><h3>{user.name}</h3><p>{user.email}</p><span className="role-pill">{user.role}</span><button className="under-link" onClick={signOut}>Sign out</button></div>
-      <div className="account-card orders-card"><small>ORDER HISTORY</small><h3>Your orders</h3>{orders.length?orders.map(o=><div className="order-row" key={o._id}><span>{o.payment?.reference}</span><b>{money(o.total,o.currency||"USD")}</b><em>{o.payment?.status}</em></div>):<p>No orders yet. Your next discovery is waiting.</p>}</div>
+      <div className="account-card orders-card"><small>ORDER HISTORY</small><h3>Your orders</h3>{orders.length?orders.map(o=><div className="order-row" key={o._id}><span>{o.payment?.reference}</span><b>{money(o.total,o.currency||"USD")}</b><em>{o.payment?.status}</em></div>):<p>No orders yet. Your next discovery is waiting.</p>}</div>\n      <div className="account-card orders-card" id="saved"><small>YOUR WISHLIST</small><h3>Saved pieces</h3>{wishlist.length?wishlist.map(p=><div className="order-row" key={p.productId}><span>{p.name}</span><b>{money(p.price,p.currency||"USD")}</b><em>{p.collection}</em></div>):<p>No saved products yet. Tap the heart on a product to keep it here.</p>}</div>
     </div>
     <p className="demo-disclaimer">Payments in this project are simulated for demonstration. No card details or real funds are processed.</p>
   </main>;

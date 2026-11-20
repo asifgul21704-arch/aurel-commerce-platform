@@ -7,7 +7,6 @@ import { connectDB } from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import catalogRoutes from "./routes/catalogRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
-import accountRoutes from "./routes/accountRoutes.js";
 import { seedCatalog } from "./services/catalogService.js";
 
 const app = express();
@@ -38,7 +37,6 @@ app.use("/api/auth", rateLimit({
 app.use("/api/auth", authRoutes);
 app.use("/api/catalog", catalogRoutes);
 app.use("/api/payments", paymentRoutes);
-app.use("/api/account", accountRoutes);
 
 app.get("/api/health", (_req, res) => res.json({
   status: "ok",
