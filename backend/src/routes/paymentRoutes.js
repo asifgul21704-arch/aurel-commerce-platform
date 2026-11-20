@@ -30,7 +30,7 @@ router.post("/demo-checkout", checkoutLimit, requireAuth, safe(async (req, res) 
     postalCode: String(shippingInput.postalCode || "").trim(),
     country: String(shippingInput.country || "").trim()
   };
-  if (shipping.fullName.length < 2 || shipping.fullName.length > 80 || !/^\\S+@\\S+\\.\\S+$/.test(shipping.email) || shipping.email.length > 254 || shipping.phone.length < 7 || shipping.phone.length > 30 || shipping.address.length < 5 || shipping.address.length > 240 || !shipping.city || shipping.city.length > 80 || shipping.postalCode.length > 20 || !shipping.country || shipping.country.length > 80) {
+  if (shipping.fullName.length < 2 || shipping.fullName.length > 80 || !/^\S+@\S+\.\S+$/.test(shipping.email) || shipping.email.length > 254 || shipping.phone.length < 7 || shipping.phone.length > 30 || shipping.address.length < 5 || shipping.address.length > 240 || !shipping.city || shipping.city.length > 80 || shipping.postalCode.length > 20 || !shipping.country || shipping.country.length > 80) {
     return res.status(400).json({ message: "Please provide valid shipping name, email, phone, address, city and country." });
   }
 
