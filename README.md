@@ -14,6 +14,8 @@ AUREL brings the supplied fashion, virtual-styling and smoothie experiences into
 ## Commerce and account features
 
 - Customer registration, login, profile and order history.
+- Customer cart and wishlist persistence across sign-in sessions.
+- Shipping/contact details stored with each order.
 - Password hashing, JWT authentication, protected routes, role checks and auth rate limits.
 - Three roles: customer, admin and owner.
 - Admin workspace for catalog creation, editing, archiving and order-status management.
@@ -21,6 +23,7 @@ AUREL brings the supplied fashion, virtual-styling and smoothie experiences into
 - MongoDB-backed catalog seeded once from the supplied source data.
 - Server-side price and currency lookup; client-submitted prices are never trusted.
 - Demo-only payment outcomes. No card data, live payment gateway or real money is used.
+- Live payment gateway activation requires a merchant provider account and private credentials configured by the owner.
 - USD and EUR orders are kept separate; a mixed-currency bag must be checked out in separate demo orders.
 
 

@@ -89,3 +89,39 @@
 .checkout-result .under-link{display:block;margin-top:14px}
 @media(max-width:760px){.checkout-layout{grid-template-columns:1fr}.checkout-summary,.checkout-form,.checkout-result{padding:20px}}
 @media(max-width:420px){.checkout-choices{grid-template-columns:1fr}}
+
+
+/* Shipping form fields in the demo checkout */
+.shipping-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 18px 0 28px;
+}
+.shipping-fields label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted, #777);
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.shipping-fields label:nth-child(4) { grid-column: 1 / -1; }
+.shipping-fields input {
+  width: 100%;
+  min-width: 0;
+  padding: 12px 13px;
+  border: 1px solid var(--line, #ddd);
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+  letter-spacing: normal;
+  text-transform: none;
+}
+.shipping-fields input:focus { outline: 1px solid currentColor; outline-offset: 2px; }
+@media (max-width: 640px) {
+  .shipping-fields { grid-template-columns: 1fr; }
+  .shipping-fields label:nth-child(4) { grid-column: auto; }
+}

@@ -3,6 +3,15 @@ import mongoose from "mongoose";
 const orderSchema = new mongoose.Schema({
   customer: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   items: [{ productId: String, name: String, price: Number, quantity: Number, currency: String, size: String, color: String }],
+  shipping: {
+    fullName: { type: String, required: true, trim: true, maxlength: 80 },
+    email: { type: String, required: true, trim: true, lowercase: true, maxlength: 254 },
+    phone: { type: String, required: true, trim: true, maxlength: 30 },
+    address: { type: String, required: true, trim: true, maxlength: 240 },
+    city: { type: String, required: true, trim: true, maxlength: 80 },
+    postalCode: { type: String, default: "", trim: true, maxlength: 20 },
+    country: { type: String, required: true, trim: true, maxlength: 80 }
+  },
   total: { type: Number, required: true, min: 0 },
   currency: { type: String, enum: ["USD", "EUR"], required: true },
   payment: {
