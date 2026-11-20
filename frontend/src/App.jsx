@@ -7,6 +7,7 @@ import MaisonSection from "./components/MaisonSection.jsx";
 import RunwaySection from "./components/RunwaySection.jsx";
 import VellStudio from "./components/VellStudio.jsx";
 import ProductQuickView from "./components/ProductQuickView.jsx";
+import BlendySection from "./components/BlendySection.jsx";
 
 const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 const CDN = "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2F";
@@ -103,8 +104,7 @@ function Home({add,saved,setSaved}){
     <MaisonSection add={add}/>
     <RunwaySection add={add}/>
     <section className="feature-band"><div className="feature-photo"><img src={looks[3].image} alt="Lilac Run look"/></div><div className="feature-copy"><span className="eyebrow">VIRTUAL EXPRESSION · 001</span><h2>Style is a<br/><i>feeling.</i></h2><p>Meet your digital muse. Change a silhouette, discover a mood and save the looks that feel like you.</p><a className="dark-button inline" href="#vell">Explore VELL Studio <ArrowUpRight size={16}/></a></div></section>
-    <section className="blendy-section" id="blendy" style={{background:drinks[activeDrink].color}}><div className="blendy-top"><span>02 — BLENDY WELLNESS</span><span>FRESHLY MIXED · ALWAYS BRIGHT</span></div><div className="blendy-main"><div className="blendy-copy"><span className="eyebrow">A LITTLE DAILY JOY</span><h2>Good things<br/>come in <i>blends.</i></h2><p>Four fruit-forward favourites. Find your flavour and make a moment of it.</p><div className="flavour-list">{drinks.map((d,i)=><button key={d.id} className={activeDrink===i?"selected":""} onClick={()=>setActiveDrink(i)}><span>0{i+1}</span>{d.name}<ArrowUpRight size={14}/></button>)}</div><button className="blendy-add" onClick={()=>notify("Blendy is a flavour discovery experience; the source prompt does not specify a product price.")}>SHOP {drinks[activeDrink].name.toUpperCase()} <ArrowUpRight size={15}/></button></div><div className="blendy-art"><div className="blendy-word">{drinks[activeDrink].name}</div><div className="blendy-fruit-set"><svg className="blendy-bottle" viewBox="0 0 1024 1024" role="img" aria-label={drinks[activeDrink].name+" smoothie bottle"}><image href={drinks[activeDrink].image} width="2048" height="2048"/></svg><svg className="blendy-fruit fruit-one" viewBox="1024 0 1024 1024" aria-hidden="true"><image href={drinks[activeDrink].image} width="2048" height="2048"/></svg><svg className="blendy-fruit fruit-two" viewBox="0 1024 1024 1024" aria-hidden="true"><image href={drinks[activeDrink].image} width="2048" height="2048"/></svg><svg className="blendy-fruit fruit-three" viewBox="1024 1024 1024 1024" aria-hidden="true"><image href={drinks[activeDrink].image} width="2048" height="2048"/></svg></div><div className="blendy-caption">FRUIT. FEELING. FRESHNESS.</div></div></div></section>
-    <ProductQuickView product={selectedProduct} onClose={()=>setSelectedProduct(null)} add={add}/>
+    <BlendySection notify={notify}/>
     <section className="manifesto" id="journal"><span className="eyebrow">THE AUREL POINT OF VIEW</span><p>Less, but <i>with intention.</i></p><a href="#collections">DISCOVER OUR WORLD <ArrowDown size={14}/></a></section>
   </main>;
 }
