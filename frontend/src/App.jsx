@@ -48,9 +48,11 @@ function App(){
     let active=true;
     if(!token){setCommerceReady(true);setCommerceOwner("");return()=>{active=false}};
     setCommerceReady(false);
-    fetch(`${API}/account/me`,{headers:{Authorization:`Bearer ${token}`}})
-      .then(async response=>{const data=await response.json();if(!response.ok)throw new Error(data.message||"Unable to load your saved bag.");return data})
-      .then(data=>{if(!active)return;setCart((data.cartItems||[]).map(item=>({...item,id:item.productId})));setSaved(data.savedProductIds||[]);setCommerceOwner(token);setCommerceReady(true)})
+    Promise.all([
+      fetch(`${API}/account/me`,{headers:{Authorization:`Bearer ${token}`}}).then(async response=>{const data=await response.json();if(!response.ok)throw new Error(data.message||"Unable to load your saved bag.");return data}),
+      fetch(`${API}/catalog`).then(async response=>{const data=await response.json();if(!response.ok)throw new Error(data.message||"Unable to load the catalog.");return data})
+    ])
+      .then(([account,catalog])=>{if(!active)return;const byId=new Map((catalog.products||[]).map(product=>[product.productId,product]));setCart((account.cartItems||[]).map(item=>({...byId.get(item.productId),...item,id:item.productId})).filter(item=>item.name));setSaved(account.savedProductIds||[]);setCommerceOwner(token);setCommerceReady(true)})
       .catch(()=>{if(active)setCommerceReady(true)});
     return()=>{active=false};
   },[token]);
@@ -67,7 +69,7 @@ function App(){
     return next;
   });
   const add=(product)=>{setCart(old=>{const same=p=>p.id===product.id&&p.size===product.size&&p.color===product.color;const found=old.find(same);return found?old.map(p=>same(p)?{...p,quantity:p.quantity+1}:p):[...old,{...product,quantity:1}]});notify(`${product.name} added to your bag`)};
-  const signOut=()=>{localStorage.removeItem("aurel-token");localStorage.removeItem("aurel-user");setToken(null);setUser(null);setCommerceReady(false);navigate("/")};
+  const signOut=()=>{localStorage.removeItem("aurel-token");localStorage.removeItem("aurel-user");setToken(null);setUser(null);setCart([]);setSaved([]);setCommerceReady(false);setCommerceOwner("");navigate("/")};
   const auth={user,token,setUser,setToken,notify};
   return <div className="app-shell">
     <div className="announcement">COMPLIMENTARY SHIPPING ON ORDERS OVER $150 <span>—</span> DISCOVER THE NEW EDIT</div>
