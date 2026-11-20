@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
-export function useCatalog(fallback) {
+export function useCatalog(fallback, includeCollectionAdditions = false) {
   const [live, setLive] = useState(null);
   useEffect(() => {
     let cancelled = false;
@@ -22,6 +22,7 @@ export function useCatalog(fallback) {
       const source = byId.get(product.id);
       return { ...product, name: source.name, price: source.price, currency: source.currency, image: source.image || product.image, category: source.category || product.category };
     });
+  if (!includeCollectionAdditions) return merged;
   const collection = fallback[0]?.collection;
   const additions = live.filter(product => product.collection === collection && !baseIds.has(product.productId))
     .map(product => ({ id: product.productId, name: product.name, price: product.price, currency: product.currency, collection: product.collection, category: product.category, image: product.image }));
