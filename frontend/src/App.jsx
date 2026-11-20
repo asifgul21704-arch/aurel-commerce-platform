@@ -79,7 +79,7 @@ function Home({add,saved,setSaved}){
   const [filter,setFilter]=useState("All");
   const liveLooks=useCatalog(looks,true);
   const [selectedProduct,setSelectedProduct]=useState(null);
-  const visible=filter==="All"?liveLooks:liveLooks.filter(p=>p.category===filter);
+  const activeLooks=liveLooks.filter(p=>p.isActive!==false);const visible=filter==="All"?activeLooks:activeLooks.filter(p=>p.category===filter);
   const heroImages=[looks[0].image,looks[6].image,looks[7].image];
   const current=looks[slide%looks.length];
   const toggleSave=id=>setSaved(old=>old.includes(id)?old.filter(x=>x!==id):[...old,id]);
