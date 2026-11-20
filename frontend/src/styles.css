@@ -62,3 +62,30 @@
 @media(max-width:520px){.product-admin-form{grid-template-columns:1fr}.product-admin-form .wide-input,.product-form-actions{grid-column:1}.catalog-admin-row{grid-template-columns:34px 1fr auto;gap:7px}.catalog-admin-row>span{grid-column:3}.catalog-admin-row>strong{grid-column:2}.catalog-admin-row>button{grid-row:3}.catalog-admin-row .archive-button{grid-column:3}}
 
 .custom-products{padding:90px 8.5%;background:#f0eee8}.custom-products .section-heading{margin-bottom:35px}.custom-products .product-image{background:#e5e2da}
+
+
+/* Interactive demo checkout */
+.checkout-layout{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(320px,.9fr);gap:18px;align-items:start;margin:28px 0 70px}
+.checkout-summary,.checkout-form,.checkout-result{padding:28px}
+.checkout-summary h2,.checkout-form h2,.checkout-result h2{font:500 25px "Instrument Serif",serif;margin:10px 0 24px}
+.checkout-line{display:flex;justify-content:space-between;gap:18px;padding:14px 0;border-bottom:1px solid var(--line);font-size:11px}
+.checkout-line>div{display:flex;flex-direction:column;gap:5px}
+.checkout-line small{color:#77746c;font-size:9px}
+.checkout-line strong{font-weight:500;white-space:nowrap}
+.checkout-total{display:flex;justify-content:space-between;padding-top:20px;margin-top:4px;font-size:13px}
+.checkout-total strong{font-size:17px}
+.checkout-form h3{font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin:25px 0 12px}
+.checkout-choices{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.checkout-choice{display:flex;flex-direction:column;gap:7px;text-align:left;padding:15px;border:1px solid #d8d5cc;background:#f7f6f2;color:#22211e;cursor:pointer}
+.checkout-choice.active{border-color:#24231f;background:#eeece5;box-shadow:inset 0 0 0 1px #24231f}
+.checkout-choice strong{font-size:11px;font-weight:600}
+.checkout-choice small{font-size:9px;color:#77746c;line-height:1.5}
+.checkout-radio{display:flex;align-items:center;gap:9px;padding:10px 0;font-size:10px;color:#48463f}
+.checkout-radio input{accent-color:#24231f}
+.checkout-form>.dark-button{width:100%;margin-top:18px}
+.checkout-result{max-width:620px;margin:30px auto}
+.checkout-result p{font-size:12px;line-height:1.7;color:#55524b}
+.checkout-result .dark-button{margin-top:15px}
+.checkout-result .under-link{display:block;margin-top:14px}
+@media(max-width:760px){.checkout-layout{grid-template-columns:1fr}.checkout-summary,.checkout-form,.checkout-result{padding:20px}}
+@media(max-width:420px){.checkout-choices{grid-template-columns:1fr}}
