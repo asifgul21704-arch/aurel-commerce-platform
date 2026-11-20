@@ -61,13 +61,13 @@ function App(){
     const items=cart.map(({id,productId,quantity,size,color})=>({productId:productId||id,quantity,size,color}));
     fetch(`${API}/account/cart`,{method:"PUT",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({items})}).catch(()=>notify("Your bag could not sync. Please check your connection."));
   },[cart,token,commerceReady,commerceOwner]);
-  const updateSaved=updater=>setSaved(previous=>{
-    const next=typeof updater==="function"?updater(previous):updater;
+  const updateSaved=updater=>{
+    const next=typeof updater==="function"?updater(saved):updater;
+    setSaved(next);
     if(token)fetch(`${API}/account/wishlist`,{method:"PUT",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({productIds:next})})
       .then(async response=>{if(!response.ok){const data=await response.json();throw new Error(data.message||"Wishlist could not sync.")}})
       .catch(()=>notify("Wishlist could not sync. Please sign in again."));
-    return next;
-  });
+  };
   const add=(product)=>{setCart(old=>{const same=p=>p.id===product.id&&p.size===product.size&&p.color===product.color;const found=old.find(same);return found?old.map(p=>same(p)?{...p,quantity:p.quantity+1}:p):[...old,{...product,quantity:1}]});notify(`${product.name} added to your bag`)};
   const signOut=()=>{localStorage.removeItem("aurel-token");localStorage.removeItem("aurel-user");setToken(null);setUser(null);setCart([]);setSaved([]);setCommerceReady(false);setCommerceOwner("");navigate("/")};
   const auth={user,token,setUser,setToken,notify};
@@ -253,7 +253,7 @@ function AccountPage({user,token,signOut}){
     <div className="dashboard-title"><span className="eyebrow">YOUR AUREL ACCOUNT</span><h1>Hello, <i>{user.name.split(" ")[0]}.</i></h1><p>Keep your saved looks close and your orders in view.</p></div>
     <div className="account-grid">
       <div className="account-card"><small>MEMBER PROFILE</small><UserRound/><h3>{user.name}</h3><p>{user.email}</p><span className="role-pill">{user.role}</span><button className="under-link" onClick={signOut}>Sign out</button></div>
-      <div className="account-card orders-card"><small>ORDER HISTORY</small><h3>Your orders</h3>{orders.length?orders.map(o=><div className="order-row" key={o._id}><span>{o.payment?.reference}</span><b>{money(o.total,o.currency||"USD")}</b><em>{o.payment?.status}</em></div>):<p>No orders yet. Your next discovery is waiting.</p>}</div>
+      <div className="account-card orders-card"><small>ORDER HISTORY</small><h3>Your orders</h3>{orders.length?orders.map(o=><div className="order-row" key={o._id}><span>{o.payment?.reference}<small>{(o.items||[]).map(item=>item.name).join(", ")} · {o.shipping?.city||"Shipping address saved"}</small></span><b>{money(o.total,o.currency||"USD")}</b><em>{o.status||o.payment?.status}</em></div>):<p>No orders yet. Your next discovery is waiting.</p>}</div>
       <div className="account-card orders-card" id="saved"><small>YOUR WISHLIST</small><h3>Saved pieces</h3>{wishlist.length?wishlist.map(p=><div className="order-row" key={p.productId}><span>{p.name}</span><b>{money(p.price,p.currency||"USD")}</b><em>{p.collection}</em></div>):<p>No saved products yet. Tap the heart on a product to keep it here.</p>}</div>
     </div>
     <p className="demo-disclaimer">Payments in this project are simulated for demonstration. No card details or real funds are processed.</p>
