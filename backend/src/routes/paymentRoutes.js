@@ -20,11 +20,26 @@ router.post("/demo-checkout", checkoutLimit, requireAuth, safe(async (req, res) 
   const requested = Array.isArray(req.body.items) ? req.body.items : [];
   if (!requested.length || requested.length > 30) return res.status(400).json({ message: "Your bag is empty or contains too many lines." });
 
-  const shippingInput = req.body.shipping || {};\n  const shipping = {\n    fullName: String(shippingInput.fullName || "").trim(),\n    email: String(shippingInput.email || "").trim().toLowerCase(),\n    phone: String(shippingInput.phone || "").trim(),\n    address: String(shippingInput.address || "").trim(),\n    city: String(shippingInput.city || "").trim(),\n    postalCode: String(shippingInput.postalCode || "").trim(),\n    country: String(shippingInput.country || "").trim()\n  };\n  if (shipping.fullName.length < 2 || shipping.fullName.length > 80 || !/^\\S+@\\S+\\.\\S+$/.test(shipping.email) || shipping.email.length > 254 || shipping.phone.length < 7 || shipping.phone.length > 30 || shipping.address.length < 5 || shipping.address.length > 240 || !shipping.city || shipping.city.length > 80 || shipping.postalCode.length > 20 || !shipping.country || shipping.country.length > 80) {\n    return res.status(400).json({ message: "Please provide valid shipping name, email, phone, address, city and country." });\n  }\n\n  const normalized = [];
+  const shippingInput = req.body.shipping || {};
+  const shipping = {
+    fullName: String(shippingInput.fullName || "").trim(),
+    email: String(shippingInput.email || "").trim().toLowerCase(),
+    phone: String(shippingInput.phone || "").trim(),
+    address: String(shippingInput.address || "").trim(),
+    city: String(shippingInput.city || "").trim(),
+    postalCode: String(shippingInput.postalCode || "").trim(),
+    country: String(shippingInput.country || "").trim()
+  };
+  if (shipping.fullName.length < 2 || shipping.fullName.length > 80 || !/^\\S+@\\S+\\.\\S+$/.test(shipping.email) || shipping.email.length > 254 || shipping.phone.length < 7 || shipping.phone.length > 30 || shipping.address.length < 5 || shipping.address.length > 240 || !shipping.city || shipping.city.length > 80 || shipping.postalCode.length > 20 || !shipping.country || shipping.country.length > 80) {
+    return res.status(400).json({ message: "Please provide valid shipping name, email, phone, address, city and country." });
+  }
+
+  const normalized = [];
   const currencies = new Set();
   for (const item of requested) {
     const product = await Product.findOne({ productId: String(item.productId || ""), isActive: true }).lean();
-    const quantity = Number(item.quantity);\n    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 20) return res.status(400).json({ message: "Each item quantity must be a whole number from 1 to 20." });
+    const quantity = Number(item.quantity);
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 20) return res.status(400).json({ message: "Each item quantity must be a whole number from 1 to 20." });
     if (!product) return res.status(400).json({ message: "An item in your bag is no longer available." });
     currencies.add(product.currency || "USD");
     normalized.push({
@@ -45,6 +60,7 @@ router.post("/demo-checkout", checkoutLimit, requireAuth, safe(async (req, res) 
   const order = await Order.create({
     customer: req.user._id,
     items: normalized,
+    shipping,
     total,
     currency,
     payment: {
