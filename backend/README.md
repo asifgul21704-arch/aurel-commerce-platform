@@ -21,10 +21,18 @@ The script refuses to create a second owner. No default credentials are included
 - `POST /api/auth/signup` — customer registration
 - `POST /api/auth/login`
 - `GET /api/auth/me` — authenticated profile
-- `GET /api/auth/admins` — owner only\n- `POST /api/auth/admins` — owner only\n- `PATCH /api/auth/admins/:id` — owner only
+- `GET /api/auth/admins` — owner only
+- `POST /api/auth/admins` — owner only
+- `PATCH /api/auth/admins/:id` — owner only
 - `GET /api/catalog`
-- `GET /api/catalog/admin/summary` — admin / owner\n- `GET /api/catalog/admin/products` — admin / owner\n- `POST /api/catalog/admin/products` — admin / owner\n- `PATCH /api/catalog/admin/products/:id` — admin / owner\n- `DELETE /api/catalog/admin/products/:id` — admin / owner (archives)
+- `GET /api/catalog/admin/summary` — admin / owner
+- `GET /api/catalog/admin/products` — admin / owner
+- `POST /api/catalog/admin/products` — admin / owner
+- `PATCH /api/catalog/admin/products/:id` — admin / owner
+- `DELETE /api/catalog/admin/products/:id` — admin / owner (archives)
 - `POST /api/payments/demo-checkout` — authenticated, simulated only
-- `GET /api/payments/my-orders` — authenticated order history\n- `GET /api/payments/admin/orders` — admin / owner\n- `PATCH /api/payments/admin/orders/:id/status` — admin / owner
+- `GET /api/payments/my-orders` — authenticated order history
+- `GET /api/payments/admin/orders` — admin / owner
+- `PATCH /api/payments/admin/orders/:id/status` — admin / owner
 
-Demo checkout accepts product IDs and quantities only. Prices and currencies are loaded from the server catalog. A single demo order cannot mix EUR and USD items.
+Demo checkout accepts product IDs, quantities and optional size/colour choices. Prices and currencies are loaded from the MongoDB server catalog; client-submitted prices are ignored. A single demo order cannot mix EUR and USD items.
