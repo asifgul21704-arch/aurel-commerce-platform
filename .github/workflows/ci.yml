@@ -1,0 +1,27 @@
+name: AUREL CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: cd frontend && npm install --no-audit --no-fund
+      - run: cd frontend && npm run build
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: cd backend && npm install --no-audit --no-fund
+      - run: cd backend && node --check src/server.js && node --check src/controllers/authController.js && node --check src/routes/paymentRoutes.js
