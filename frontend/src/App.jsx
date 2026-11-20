@@ -1,0 +1,121 @@
+import { useEffect, useMemo, useState } from "react";
+import { Link, NavLink, Route, Routes, useNavigate } from "react-router-dom";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronDown, Heart, LockKeyhole, Menu, Minus, Plus, ShoppingBag, Sparkles, UserRound, X } from "lucide-react";
+
+const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+const CDN = "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2F";
+const looks = [
+  ["Denim Maxi","Everyday",450,"hf_20261112_034542_a6430ecf-9862-412c-8ef6-5745115bd78c.png"],
+  ["Cloud Set","Everyday",326,"hf_20261112_034738_73282737-acc8-41e9-a822-96c663e27b6c.png"],
+  ["Library Knit","Everyday",384,"hf_20261112_034742_9a8a92fd-79ae-4163-9ffa-14ae2a68717f.png"],
+  ["Lilac Run","Athletic",344,"hf_20261112_034735_4e352e03-ad2b-44d1-9fcf-4b5b9454dc55.png"],
+  ["Satin Night","Sleep",158,"hf_20261112_034738_aeb8ea57-6399-4f3c-b54a-4a57d0bd971e.png"],
+  ["Night Suit","Formal",672,"hf_20261112_034736_aace5c5f-8c14-4b00-83ba-744dbad2e337.png"],
+  ["Sage Slip","Party",366,"hf_20261112_034735_3d9fb69e-b4e0-49f7-a2d4-e592bd616c27.png"],
+  ["Bomber Cargo","Street",526,"hf_20261112_034740_3e3c5ad7-689b-46a2-8e09-c7d36a569b9c.png"]
+].map(([name,category,price,file],i)=>({id:`vell-${i}`,name,category,price,collection:"VELL Studio",image:`${CDN}${file}&w=1000&q=85`}));
+const drinks = [
+  ["Berry","#d9a2a8","hf_20261117_053958_8803e421-29b1-4c24-8efd-54cae3f479b4.png"],
+  ["Kiwi","#b8c79b","hf_20261117_053958_b5695e60-72da-4b5b-bfb7-a091d528af75.png"],
+  ["Banana","#e8d6a0","hf_20261117_053958_6cf14029-4bce-4c9a-b9fc-1c5b185082e3.png"],
+  ["Strawberry","#e6a4a0","hf_20261117_055135_cbfb5a8d-c52b-4358-a6ee-d941c6c42285.png"]
+].map(([name,color,file],i)=>({id:`blendy-${i}`,name,category:"Smoothie",price:8,collection:"Blendy",color,image:`https://images.higgs.ai/?default=1&output=webp&w=2048&q=85&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2F${file}`}));
+const products = [...looks,...drinks];
+const money = value => `$${Number(value).toLocaleString("en-US")}`;
+
+function App(){
+  const [user,setUser]=useState(()=>{try{return JSON.parse(localStorage.getItem("aurel-user"))}catch{return null}});
+  const [token,setToken]=useState(()=>localStorage.getItem("aurel-token"));
+  const [cart,setCart]=useState([]);
+  const [saved,setSaved]=useState([]);
+  const [bagOpen,setBagOpen]=useState(false);
+  const [notice,setNotice]=useState("");
+  const [mobileOpen,setMobileOpen]=useState(false);
+  const navigate=useNavigate();
+  const total=cart.reduce((s,p)=>s+p.price*p.quantity,0);
+  const count=cart.reduce((s,p)=>s+p.quantity,0);
+  const notify=message=>{setNotice(message);window.setTimeout(()=>setNotice(""),2600)};
+  const add=(product)=>{setCart(old=>{const found=old.find(p=>p.id===product.id);return found?old.map(p=>p.id===product.id?{...p,quantity:p.quantity+1}:p):[...old,{...product,quantity:1}]});notify(`${product.name} added to your bag`)};
+  const signOut=()=>{localStorage.removeItem("aurel-token");localStorage.removeItem("aurel-user");setToken(null);setUser(null);navigate("/")};
+  const auth={user,token,setUser,setToken,notify};
+  return <div className="app-shell">
+    <div className="announcement">COMPLIMENTARY SHIPPING ON ORDERS OVER $150 <span>—</span> DISCOVER THE NEW EDIT</div>
+    <header className="site-header">
+      <button className="icon-button mobile-menu" onClick={()=>setMobileOpen(!mobileOpen)} aria-label="Toggle menu">{mobileOpen?<X/>:<Menu/>}</button>
+      <Link className="wordmark" to="/">AUREL<span>®</span></Link>
+      <nav className={mobileOpen?"main-nav open":"main-nav"}>
+        <a href="/#collections" onClick={()=>setMobileOpen(false)}>Collections</a><a href="/#vell" onClick={()=>setMobileOpen(false)}>VELL Studio</a><a href="/#blendy" onClick={()=>setMobileOpen(false)}>Blendy</a><a href="/#journal" onClick={()=>setMobileOpen(false)}>Our World</a>
+      </nav>
+      <div className="header-actions">
+        {user?<button className="text-action" onClick={()=>navigate(user.role==="owner"?"/owner":user.role==="admin"?"/admin":"/account")}>{user.name.split(" ")[0]}</button>:<Link className="text-action" to="/login">Sign in</Link>}
+        <button className="icon-button saved-action" onClick={()=>notify(`${saved.length} saved looks`)} aria-label="Saved looks"><Heart size={18}/></button>
+        <button className="bag-trigger" onClick={()=>setBagOpen(true)}><ShoppingBag size={17}/> <span>Bag ({count})</span></button>
+        {user&&<button className="text-action signout" onClick={signOut}>Sign out</button>}
+      </div>
+    </header>
+    <Routes>
+      <Route path="/" element={<Home add={add} saved={saved} setSaved={setSaved}/>}/>
+      <Route path="/login" element={<AuthPage mode="login" auth={auth}/>}/>
+      <Route path="/signup" element={<AuthPage mode="signup" auth={auth}/>}/>
+      <Route path="/account" element={<AccountPage user={user} token={token} signOut={signOut}/>}/>
+      <Route path="/admin" element={<Dashboard user={user} token={token} type="admin"/>}/>
+      <Route path="/owner" element={<Dashboard user={user} token={token} type="owner"/>}/>
+      <Route path="*" element={<Home add={add} saved={saved} setSaved={setSaved}/>}/>
+    </Routes>
+    <footer className="footer"><div className="footer-brand">AUREL<span>®</span></div><p>Considered pieces. Everyday rituals. A world of your own.</p><div className="footer-bottom"><span>© 2026 AUREL STUDIO</span><span>DESIGNED TO BE DISCOVERED</span><span>PRIVACY · TERMS · CONTACT</span></div></footer>
+    {bagOpen&&<div className="overlay" onMouseDown={e=>e.target===e.currentTarget&&setBagOpen(false)}><aside className="bag-panel"><div className="bag-head"><div><small>YOUR SELECTION</small><h2>Shopping bag <em>({count})</em></h2></div><button className="icon-button" onClick={()=>setBagOpen(false)}><X/></button></div>
+      {cart.length===0?<div className="empty-bag"><ShoppingBag size={30}/><p>Your bag is waiting for something lovely.</p><button className="dark-button" onClick={()=>setBagOpen(false)}>Continue exploring</button></div>:<><div className="bag-items">{cart.map(p=><div className="bag-item" key={p.id}><img src={p.image} alt=""/><div className="bag-item-info"><b>{p.name}</b><small>{p.collection}</small><strong>{money(p.price)}</strong><div className="quantity"><button onClick={()=>setCart(old=>old.map(x=>x.id===p.id?{...x,quantity:Math.max(1,x.quantity-1)}:x))}><Minus size={12}/></button><span>{p.quantity}</span><button onClick={()=>add(p)}><Plus size={12}/></button><button className="remove" onClick={()=>setCart(old=>old.filter(x=>x.id!==p.id))}>Remove</button></div></div></div>)}</div><div className="bag-checkout"><div><span>Subtotal</span><b>{money(total)}</b></div><small>Demo checkout only — no real payment is collected.</small><button className="dark-button" onClick={()=>{setBagOpen(false);if(!user)navigate("/login");else navigate("/account?checkout=1")}}>Continue to demo checkout <ArrowRight size={16}/></button></div></>}
+    </aside></div>}
+    {notice&&<div className="toast"><Check size={16}/>{notice}</div>}
+  </div>;
+}
+
+function Home({add,saved,setSaved}){
+  const [slide,setSlide]=useState(0);
+  const [filter,setFilter]=useState("All");
+  const [activeDrink,setActiveDrink]=useState(0);
+  const visible=filter==="All"?looks:looks.filter(p=>p.category===filter);
+  const heroImages=[looks[0].image,looks[6].image,looks[7].image];
+  const current=looks[slide%looks.length];
+  const toggleSave=id=>setSaved(old=>old.includes(id)?old.filter(x=>x!==id):[...old,id]);
+  return <main>
+    <section className="hero">
+      <div className="hero-copy"><div className="eyebrow"><span className="eyebrow-line"/>THE AUREL EDIT · NO. 01</div><h1>Wear your<br/><i>own story.</i></h1><p>A considered collection of modern essentials, virtual expression and little everyday rituals.</p><div className="hero-buttons"><a className="light-button" href="#collections">Explore the edit <ArrowUpRight size={16}/></a><a className="under-link" href="#vell">Discover VELL</a></div><div className="hero-index"><span>0{slide+1}</span><span className="index-line"/><span>03</span><div className="hero-arrows"><button onClick={()=>setSlide((slide+2)%3)} aria-label="Previous"><ArrowLeft/></button><button onClick={()=>setSlide((slide+1)%3)} aria-label="Next"><ArrowRight/></button></div></div></div>
+      <div className="hero-art"><div className="hero-image" style={{backgroundImage:`url("${heroImages[slide]}")`}}/><div className="hero-art-note"><span>01 / 08</span><span>THE NEW SILHOUETTE</span></div><div className="hero-stamp">A<br/>/ R</div></div>
+      <div className="hero-vertical">CURATED STYLE & LIVING — EST. 2026</div>
+    </section>
+    <section className="intro-strip" id="collections"><span>01 — OUR UNIVERSE</span><p>One destination.<br/><i>Many ways to express.</i></p><span>SCROLL TO EXPLORE ↓</span></section>
+    <section className="collection-section" id="vell"><div className="section-heading"><div><span className="eyebrow">THE VELL STUDIO</span><h2>Find your <i>form.</i></h2></div><p>Eight looks. One character. A world of possibilities.<br/>Explore the original VELL virtual styling collection.</p></div>
+      <div className="filter-row">{["All","Everyday","Athletic","Sleep","Formal","Party","Street"].map(f=><button key={f} className={filter===f?"active":""} onClick={()=>setFilter(f)}>{f}</button>)}<span>{visible.length.toString().padStart(2,"0")} LOOKS</span></div>
+      <div className="product-grid">{visible.map((p,i)=><article className="product-card" key={p.id}><div className="product-image"><img src={p.image} alt={p.name}/><span className="product-number">0{looks.indexOf(p)+1}</span><button className={saved.includes(p.id)?"heart-button active":"heart-button"} onClick={()=>toggleSave(p.id)} aria-label="Save look"><Heart size={17}/></button><button className="quick-add" onClick={()=>add(p)}>ADD TO BAG <Plus size={14}/></button></div><div className="product-meta"><div><small>{p.category.toUpperCase()} · VELL STUDIO</small><h3>{p.name}</h3></div><b>{money(p.price)}</b></div></article>)}</div>
+    </section>
+    <section className="feature-band"><div className="feature-photo"><img src={looks[3].image} alt="Lilac Run look"/></div><div className="feature-copy"><span className="eyebrow">VIRTUAL EXPRESSION · 001</span><h2>Style is a<br/><i>feeling.</i></h2><p>Meet your digital muse. Change a silhouette, discover a mood and save the looks that feel like you.</p><a className="dark-button inline" href="#vell">Explore VELL Studio <ArrowUpRight size={16}/></a></div></section>
+    <section className="blendy-section" id="blendy" style={{background:drinks[activeDrink].color}}><div className="blendy-top"><span>02 — BLENDY WELLNESS</span><span>FRESHLY MIXED · ALWAYS BRIGHT</span></div><div className="blendy-main"><div className="blendy-copy"><span className="eyebrow">A LITTLE DAILY JOY</span><h2>Good things<br/>come in <i>blends.</i></h2><p>Four fruit-forward favourites. Find your flavour and make a moment of it.</p><div className="flavour-list">{drinks.map((d,i)=><button key={d.id} className={activeDrink===i?"selected":""} onClick={()=>setActiveDrink(i)}><span>0{i+1}</span>{d.name}<ArrowUpRight size={14}/></button>)}</div><button className="blendy-add" onClick={()=>add(drinks[activeDrink])}>ADD {drinks[activeDrink].name.toUpperCase()} · {money(8)} <Plus size={15}/></button></div><div className="blendy-art"><div className="blendy-word">{drinks[activeDrink].name}</div><img src={drinks[activeDrink].image} alt={drinks[activeDrink].name+" smoothie flavour"}/><div className="blendy-caption">FRUIT. FEELING. FRESHNESS.</div></div></div></section>
+    <section className="manifesto" id="journal"><span className="eyebrow">THE AUREL POINT OF VIEW</span><p>Less, but <i>with intention.</i></p><a href="#collections">DISCOVER OUR WORLD <ArrowDown size={14}/></a></section>
+  </main>;
+}
+
+function AuthPage({mode,auth}){
+  const signup=mode==="signup";const [form,setForm]=useState({name:"",email:"",password:""});const [error,setError]=useState("");const [busy,setBusy]=useState(false);const navigate=useNavigate();
+  const change=e=>setForm({...form,[e.target.name]:e.target.value});
+  const submit=async e=>{e.preventDefault();setError("");setBusy(true);try{const response=await fetch(`${API}/auth/${signup?"signup":"login"}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(form)});const data=await response.json();if(!response.ok)throw new Error(data.message||"Unable to sign in");localStorage.setItem("aurel-token",data.token);localStorage.setItem("aurel-user",JSON.stringify(data.user));auth.setToken(data.token);auth.setUser(data.user);auth.notify("Welcome to AUREL");navigate(data.user.role==="owner"?"/owner":data.user.role==="admin"?"/admin":"/account");}catch(err){setError(err.message)}finally{setBusy(false)}};
+  return <main className="auth-layout"><div className="auth-visual"><span className="eyebrow">AUREL MEMBERSHIP</span><h1>A world of<br/><i>your own.</i></h1><p>Save your favourites, keep your edits and make every discovery yours.</p><div className="auth-image"><img src={looks[1].image} alt="AUREL styling look"/></div></div><div className="auth-form-wrap"><div className="auth-form"><span className="eyebrow">{signup?"CREATE YOUR ACCOUNT":"WELCOME BACK"}</span><h2>{signup?"Join the edit.":"Sign in."}</h2><p>{signup?"Create an account to save looks and manage your orders.":"Your AUREL world is right where you left it."}</p><form onSubmit={submit}>{signup&&<label>Full name<input name="name" value={form.name} onChange={change} autoComplete="name" required minLength="2"/></label>}<label>Email address<input name="email" type="email" value={form.email} onChange={change} autoComplete="email" required/></label><label>Password<input name="password" type="password" value={form.password} onChange={change} autoComplete={signup?"new-password":"current-password"} required minLength={signup?10:1}/>{signup&&<small>Use at least 10 characters.</small>}</label>{error&&<div className="form-error">{error}</div>}<button className="dark-button" disabled={busy}>{busy?"PLEASE WAIT…":signup?"CREATE ACCOUNT":"SIGN IN"} <ArrowRight size={16}/></button></form><div className="auth-switch">{signup?"Already part of AUREL?":"New to AUREL?"} <Link to={signup?"/login":"/signup"}>{signup?"Sign in":"Create an account"}</Link></div><small className="secure-note"><LockKeyhole size={13}/> Your password is securely hashed by the AUREL API.</small></div></div></main>;
+}
+
+function AccountPage({user,token,signOut}){
+  const [orders,setOrders]=useState([]);const [message,setMessage]=useState("");const [busy,setBusy]=useState(false);
+  useEffect(()=>{if(token)fetch(`${API}/payments/my-orders`,{headers:{Authorization:`Bearer ${token}`}}).then(r=>r.json()).then(d=>setOrders(d.orders||[])).catch(()=>{});},[token]);
+  const checkout=async()=>{const raw=new URLSearchParams(window.location.search).get("checkout");if(raw!=="1")return;setBusy(true);try{const cart=JSON.parse(sessionStorage.getItem("aurel-checkout")||"[]");if(!cart.length){setMessage("Add something to your bag before demo checkout.");return}const res=await fetch(`${API}/payments/demo-checkout`,{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({items:cart,method:"demo-card"})});const data=await res.json();if(!res.ok)throw new Error(data.message);setMessage(data.message);setOrders(old=>[data.order,...old]);}catch(e){setMessage(e.message)}finally{setBusy(false)}};
+  useEffect(()=>{checkout()},[token]);
+  if(!user)return <div className="center-state"><h2>Sign in to view your account.</h2><Link className="dark-button inline" to="/login">Sign in</Link></div>;
+  return <main className="dashboard-page"><div className="dashboard-title"><span className="eyebrow">YOUR AUREL ACCOUNT</span><h1>Hello, <i>{user.name.split(" ")[0]}.</i></h1><p>Keep your saved looks close and your orders in view.</p></div>{message&&<div className="notice-box">{message}</div>}<div className="account-grid"><div className="account-card"><small>MEMBER PROFILE</small><UserRound/><h3>{user.name}</h3><p>{user.email}</p><span className="role-pill">{user.role}</span><button className="under-link" onClick={signOut}>Sign out</button></div><div className="account-card orders-card"><small>ORDER HISTORY</small><h3>Your orders</h3>{orders.length?orders.map(o=><div className="order-row" key={o._id}><span>{o.payment?.reference}</span><b>{money(o.total)}</b><em>{o.payment?.status}</em></div>):<p>No orders yet. Your next discovery is waiting.</p>}</div></div><p className="demo-disclaimer">Payments in this project are simulated for demonstration. No card details or real funds are processed.</p></main>;
+}
+
+function Dashboard({user,token,type}){
+  const [summary,setSummary]=useState(null);const [admins,setAdmins]=useState([]);const [form,setForm]=useState({name:"",email:"",password:""});const [message,setMessage]=useState("");
+  useEffect(()=>{if(!user||!["admin","owner"].includes(user.role)){setMessage("You do not have access to this dashboard.");return}fetch(`${API}/catalog/admin/summary`,{headers:{Authorization:`Bearer ${token}`}}).then(r=>r.json()).then(setSummary).catch(()=>{});},[user,token]);
+  const create=async e=>{e.preventDefault();setMessage("");const r=await fetch(`${API}/auth/admins`,{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify(form)});const d=await r.json();if(!r.ok){setMessage(d.message);return}setAdmins(old=>[...old,d.user]);setForm({name:"",email:"",password:""});setMessage("Admin account created.");};
+  if(!user||!(type==="owner"?user.role==="owner":["admin","owner"].includes(user.role)))return <main className="center-state"><h2>Restricted area</h2><p>{message||"Sign in with an authorized account."}</p><Link className="dark-button inline" to="/login">Sign in</Link></main>;
+  return <main className="dashboard-page"><div className="dashboard-title"><span className="eyebrow">{type==="owner"?"OWNER CONTROL ROOM":"ADMINISTRATION"}</span><h1>{type==="owner"?"Steward the":"Manage the"} <i>details.</i></h1><p>Welcome, {user.name}. This secure workspace is separate from the customer storefront.</p></div><div className="stats-grid"><div className="stat-card"><small>CATALOG ITEMS</small><strong>{summary?.products??"—"}</strong><span>Across all collections</span></div><div className="stat-card"><small>COLLECTIONS</small><strong>{summary?.collections??"—"}</strong><span>Fashion and wellness</span></div><div className="stat-card"><small>ACCESS LEVEL</small><strong>{user.role.toUpperCase()}</strong><span>Protected role permissions</span></div></div><div className="admin-workspace"><div><span className="eyebrow">COMMERCE OPERATIONS</span><h2>Catalog & orders</h2><p>The catalog API is connected. Product editing, order operations and audit history are the next implementation stage.</p></div>{type==="owner"&&<div className="create-admin"><span className="eyebrow">OWNER ONLY</span><h2>Create an administrator</h2><form onSubmit={create}><input placeholder="Admin full name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} required/><input type="email" placeholder="Admin email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} required/><input type="password" placeholder="Temporary password (12+ characters)" minLength="12" value={form.password} onChange={e=>setForm({...form,password:e.target.value})} required/><button className="dark-button">Create admin <Plus size={15}/></button></form>{message&&<small>{message}</small>}{admins.map(a=><div className="admin-row" key={a.id}>{a.name}<span>{a.email}</span></div>)}</div>}</div></main>;
+}
+export default App;
