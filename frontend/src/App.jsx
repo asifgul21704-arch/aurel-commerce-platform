@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, Route, Routes, useNavigate } from "react-router-dom";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Check, Heart, LockKeyhole, Menu, Minus, Plus, ShoppingBag, UserRound, X } from "lucide-react";
 import OffcutSection from "./components/OffcutSection.jsx";
@@ -59,14 +59,14 @@ function App(){
       </div>
     </header>
     <Routes>
-      <Route path="/" element={<Home add={add} saved={saved} setSaved={setSaved}/>}/>
+      <Route path="/" element={<Home add={add} saved={saved} setSaved={setSaved} notify={notify}/>}/>
       <Route path="/login" element={<AuthPage mode="login" auth={auth}/>}/>
       <Route path="/signup" element={<AuthPage mode="signup" auth={auth}/>}/>
       <Route path="/checkout" element={<DemoCheckoutPage user={user} token={token} onCheckoutComplete={()=>setCart([])}/>}/>
       <Route path="/account" element={<AccountPage user={user} token={token} signOut={signOut}/>}/>
       <Route path="/admin" element={<Dashboard user={user} token={token} type="admin"/>}/>
       <Route path="/owner" element={<Dashboard user={user} token={token} type="owner"/>}/>
-      <Route path="*" element={<Home add={add} saved={saved} setSaved={setSaved}/>}/>
+      <Route path="*" element={<Home add={add} saved={saved} setSaved={setSaved} notify={notify}/>}/>
     </Routes>
     <footer className="footer"><div className="footer-brand">AUREL<span>®</span></div><p>Considered pieces. Everyday rituals. A world of your own.</p><div className="footer-bottom"><span>© 2026 AUREL STUDIO</span><span>DESIGNED TO BE DISCOVERED</span><span>PRIVACY · TERMS · CONTACT</span></div></footer>
     {bagOpen&&<div className="overlay" onMouseDown={e=>e.target===e.currentTarget&&setBagOpen(false)}><aside className="bag-panel"><div className="bag-head"><div><small>YOUR SELECTION</small><h2>Shopping bag <em>({count})</em></h2></div><button className="icon-button" onClick={()=>setBagOpen(false)}><X/></button></div>
@@ -76,7 +76,7 @@ function App(){
   </div>;
 }
 
-function Home({add,saved,setSaved}){
+function Home({add,saved,setSaved,notify}){
   const [slide,setSlide]=useState(0);
   const [filter,setFilter]=useState("All");
   const liveLooks=useCatalog(looks);
@@ -105,6 +105,7 @@ function Home({add,saved,setSaved}){
     <section className="feature-band"><div className="feature-photo"><img src={looks[3].image} alt="Lilac Run look"/></div><div className="feature-copy"><span className="eyebrow">VIRTUAL EXPRESSION · 001</span><h2>Style is a<br/><i>feeling.</i></h2><p>Meet your digital muse. Change a silhouette, discover a mood and save the looks that feel like you.</p><a className="dark-button inline" href="#vell">Explore VELL Studio <ArrowUpRight size={16}/></a></div></section>
     <BlendySection notify={notify}/>
     <section className="manifesto" id="journal"><span className="eyebrow">THE AUREL POINT OF VIEW</span><p>Less, but <i>with intention.</i></p><a href="#collections">DISCOVER OUR WORLD <ArrowDown size={14}/></a></section>
+    <ProductQuickView product={selectedProduct} onClose={()=>setSelectedProduct(null)} add={add}/>
   </main>;
 }
 
