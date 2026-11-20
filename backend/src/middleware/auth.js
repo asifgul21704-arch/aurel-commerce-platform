@@ -6,7 +6,10 @@ export async function requireAuth(req, res, next) {
     const header = req.headers.authorization || "";
     const token = header.startsWith("Bearer ") ? header.slice(7) : null;
     if (!token) return res.status(401).json({ message: "Sign in to continue." });
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    const payload = jwt.verify(token, process.env.JWT_SECRET, {
+      issuer: "aurel-api",
+      audience: "aurel-client"
+    });
     const user = await User.findById(payload.sub);
     if (!user || !user.isActive) return res.status(401).json({ message: "This account is unavailable." });
     req.user = user;
