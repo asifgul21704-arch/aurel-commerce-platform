@@ -120,15 +120,18 @@ function AccountPage({user,token,signOut,onCheckoutComplete}){
 }
 
 function Dashboard({user,token,type}){
-  const [summary,setSummary]=useState(null),[admins,setAdmins]=useState([]),[orders,setOrders]=useState([]);
-  const [form,setForm]=useState({name:"",email:"",password:""}),[message,setMessage]=useState("");
+  const [summary,setSummary]=useState(null),[admins,setAdmins]=useState([]),[orders,setOrders]=useState([]),[products,setProducts]=useState([]);
+  const [form,setForm]=useState({name:"",email:"",password:""});
+  const [productForm,setProductForm]=useState({name:"",collection:"",category:"General",price:"",currency:"USD",image:"",description:""});
+  const [editingProduct,setEditingProduct]=useState(null),[message,setMessage]=useState("");
   const headers={Authorization:`Bearer ${token}`};
   const loadOrders=()=>fetch(`${API}/payments/admin/orders`,{headers}).then(r=>r.json()).then(d=>setOrders(d.orders||[])).catch(()=>{});
   const loadAdmins=()=>fetch(`${API}/auth/admins`,{headers}).then(r=>r.json()).then(d=>setAdmins(d.admins||[])).catch(()=>{});
+  const loadProducts=()=>fetch(`${API}/catalog/admin/products`,{headers}).then(r=>r.json()).then(d=>setProducts(d.products||[])).catch(()=>{});
   useEffect(()=>{
     if(!user||!["admin","owner"].includes(user.role)){setMessage("You do not have access to this dashboard.");return}
     fetch(`${API}/catalog/admin/summary`,{headers}).then(r=>r.json()).then(setSummary).catch(()=>{});
-    loadOrders();
+    loadOrders();loadProducts();
     if(user.role==="owner")loadAdmins();
   },[user,token]);
   const create=async e=>{
@@ -136,6 +139,21 @@ function Dashboard({user,token,type}){
     const r=await fetch(`${API}/auth/admins`,{method:"POST",headers:{"Content-Type":"application/json",...headers},body:JSON.stringify(form)});
     const d=await r.json();if(!r.ok){setMessage(d.message);return}
     setForm({name:"",email:"",password:""});setMessage("Admin account created.");loadAdmins();
+  };
+  const saveProduct=async e=>{
+    e.preventDefault();setMessage("");
+    const url=editingProduct?`${API}/catalog/admin/products/${editingProduct}`:`${API}/catalog/admin/products`;
+    const r=await fetch(url,{method:editingProduct?"PATCH":"POST",headers:{"Content-Type":"application/json",...headers},body:JSON.stringify(productForm)});
+    const d=await r.json();if(!r.ok){setMessage(d.message);return}
+    setProductForm({name:"",collection:"",category:"General",price:"",currency:"USD",image:"",description:""});setEditingProduct(null);setMessage(editingProduct?"Product updated.":"Product created.");loadProducts();
+    fetch(`${API}/catalog/admin/summary`,{headers}).then(r=>r.json()).then(setSummary).catch(()=>{});
+  };
+  const editProduct=p=>{setEditingProduct(p._id);setProductForm({name:p.name,collection:p.collection,category:p.category||"General",price:String(p.price),currency:p.currency||"USD",image:p.image||"",description:p.description||""});window.scrollTo({top:document.body.scrollHeight,behavior:"smooth"})};
+  const archiveProduct=async p=>{
+    const r=await fetch(`${API}/catalog/admin/products/${p._id}`,{method:"DELETE",headers});
+    const d=await r.json();if(!r.ok){setMessage(d.message);return}
+    setMessage(`${p.name} archived.`);loadProducts();
+    fetch(`${API}/catalog/admin/summary`,{headers}).then(r=>r.json()).then(setSummary).catch(()=>{});
   };
   const changeStatus=async(id,status)=>{
     const r=await fetch(`${API}/payments/admin/orders/${id}/status`,{method:"PATCH",headers:{"Content-Type":"application/json",...headers},body:JSON.stringify({status})});
@@ -151,7 +169,20 @@ function Dashboard({user,token,type}){
   return <main className="dashboard-page">
     <div className="dashboard-title"><span className="eyebrow">{type==="owner"?"OWNER CONTROL ROOM":"ADMINISTRATION"}</span><h1>{type==="owner"?"Steward the":"Manage the"} <i>details.</i></h1><p>Welcome, {user.name}. This secure workspace is separate from the customer storefront.</p></div>
     {message&&<div className="notice-box">{message}</div>}
-    <div className="stats-grid"><div className="stat-card"><small>CATALOG ITEMS</small><strong>{summary?.products??"—"}</strong><span>Across all collections</span></div><div className="stat-card"><small>COLLECTIONS</small><strong>{summary?.collections??"—"}</strong><span>Fashion and wellness</span></div><div className="stat-card"><small>ORDERS LOADED</small><strong>{orders.length}</strong><span>Latest 100 orders</span></div></div>
+    <div className="stats-grid"><div className="stat-card"><small>ACTIVE CATALOG ITEMS</small><strong>{summary?.products??"—"}</strong><span>Across all collections</span></div><div className="stat-card"><small>COLLECTIONS</small><strong>{summary?.collections??"—"}</strong><span>Fashion and wellness</span></div><div className="stat-card"><small>ORDERS LOADED</small><strong>{orders.length}</strong><span>Latest 100 orders</span></div></div>
+    <section className="admin-products"><div className="admin-section-title"><div><span className="eyebrow">CATALOG MANAGEMENT</span><h2>{editingProduct?"Edit product":"Products & collections"}</h2></div><button className="under-link" onClick={loadProducts}>Refresh catalog</button></div>
+      <form className="product-admin-form" onSubmit={saveProduct}>
+        <input placeholder="Product name" value={productForm.name} onChange={e=>setProductForm({...productForm,name:e.target.value})} required/>
+        <input placeholder="Collection" value={productForm.collection} onChange={e=>setProductForm({...productForm,collection:e.target.value})} required/>
+        <input placeholder="Category" value={productForm.category} onChange={e=>setProductForm({...productForm,category:e.target.value})}/>
+        <input type="number" min="0" step="0.01" placeholder="Price" value={productForm.price} onChange={e=>setProductForm({...productForm,price:e.target.value})} required/>
+        <select value={productForm.currency} onChange={e=>setProductForm({...productForm,currency:e.target.value})}><option value="USD">USD</option><option value="EUR">EUR</option></select>
+        <input className="wide-input" placeholder="Product image HTTPS URL (optional)" value={productForm.image} onChange={e=>setProductForm({...productForm,image:e.target.value})}/>
+        <textarea className="wide-input" rows="2" placeholder="Short description (optional)" value={productForm.description} onChange={e=>setProductForm({...productForm,description:e.target.value})}/>
+        <div className="product-form-actions"><button className="dark-button">{editingProduct?"Save changes":"Add product"} <Plus size={15}/></button>{editingProduct&&<button type="button" className="under-link" onClick={()=>{setEditingProduct(null);setProductForm({name:"",collection:"",category:"General",price:"",currency:"USD",image:"",description:""})}}>Cancel edit</button>}</div>
+      </form>
+      <div className="catalog-admin-list">{products.map(p=><div className="catalog-admin-row" key={p._id}><img src={p.image} alt=""/><div><b>{p.name}</b><small>{p.collection} · {p.category}</small></div><strong>{money(p.price,p.currency||"USD")}</strong><span className={p.isActive?"catalog-active":"catalog-archived"}>{p.isActive?"ACTIVE":"ARCHIVED"}</span><button onClick={()=>editProduct(p)}>Edit</button>{p.isActive&&<button className="archive-button" onClick={()=>archiveProduct(p)}>Archive</button>}</div>)}</div>
+    </section>
     <section className="admin-orders"><div className="admin-section-title"><div><span className="eyebrow">ORDER MANAGEMENT</span><h2>Recent orders</h2></div><button className="under-link" onClick={loadOrders}>Refresh orders</button></div>
       {orders.length?<div className="orders-table"><div className="orders-table-head"><span>ORDER / CUSTOMER</span><span>DATE</span><span>TOTAL</span><span>PAYMENT</span><span>STATUS</span></div>{orders.map(order=><div className="orders-table-row" key={order._id}><div><b>{order.payment?.reference||order._id.slice(-8)}</b><small>{order.customer?.name||"Customer"} · {order.customer?.email||"—"}</small></div><span>{new Date(order.createdAt).toLocaleDateString()}</span><b>{money(order.total,order.currency||"USD")}</b><span>{order.payment?.status||"—"}</span><select value={order.status} onChange={e=>changeStatus(order._id,e.target.value)}><option value="pending">Pending</option><option value="processing">Processing</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></div>)}</div>:<p className="admin-empty">No demo orders yet. Orders will appear here after a customer completes checkout.</p>}
     </section>
