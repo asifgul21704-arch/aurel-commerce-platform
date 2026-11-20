@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, NavLink, Route, Routes, useNavigate } from "react-router-dom";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronDown, Heart, LockKeyhole, Menu, Minus, Plus, ShoppingBag, Sparkles, UserRound, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, Route, Routes, useNavigate } from "react-router-dom";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Check, Heart, LockKeyhole, Menu, Minus, Plus, ShoppingBag, UserRound, X } from "lucide-react";
 import OffcutSection from "./components/OffcutSection.jsx";
 import VirtualFitSection from "./components/VirtualFitSection.jsx";
 import MaisonSection from "./components/MaisonSection.jsx";
@@ -21,13 +21,7 @@ const looks = [
   ["Sage Slip","Party",366,"hf_20261112_034735_3d9fb69e-b4e0-49f7-a2d4-e592bd616c27.png"],
   ["Bomber Cargo","Street",526,"hf_20261112_034740_3e3c5ad7-689b-46a2-8e09-c7d36a569b9c.png"]
 ].map(([name,category,price,file],i)=>({id:`vell-${i}`,name,category,price,collection:"VELL Studio",image:`${CDN}${file}&w=1000&q=85`}));
-const drinks = [
-  ["Berry","#d9a2a8","hf_20261117_053958_8803e421-29b1-4c24-8efd-54cae3f479b4.png"],
-  ["Kiwi","#b8c79b","hf_20261117_053958_b5695e60-72da-4b5b-bfb7-a091d528af75.png"],
-  ["Banana","#e8d6a0","hf_20261117_053958_6cf14029-4bce-4c9a-b9fc-1c5b185082e3.png"],
-  ["Strawberry","#e6a4a0","hf_20261117_055135_cbfb5a8d-c52b-4358-a6ee-d941c6c42285.png"]
-].map(([name,color,file],i)=>({id:`blendy-${i}`,name,category:"Smoothie",collection:"Blendy",color,image:`https://images.higgs.ai/?default=1&output=webp&w=2048&q=85&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2F${file}`}));
-const products = [...looks,...drinks];
+
 const money = (value,currency="USD") => new Intl.NumberFormat("en-US",{style:"currency",currency,maximumFractionDigits:2}).format(Number(value));
 
 function App(){
@@ -82,7 +76,7 @@ function App(){
 function Home({add,saved,setSaved}){
   const [slide,setSlide]=useState(0);
   const [filter,setFilter]=useState("All");
-  const [activeDrink,setActiveDrink]=useState(0),[selectedProduct,setSelectedProduct]=useState(null);
+  const [selectedProduct,setSelectedProduct]=useState(null);
   const visible=filter==="All"?looks:looks.filter(p=>p.category===filter);
   const heroImages=[looks[0].image,looks[6].image,looks[7].image];
   const current=looks[slide%looks.length];
