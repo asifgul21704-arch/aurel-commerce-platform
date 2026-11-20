@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, Heart, Plus } from "lucide-react";
 import { runwayItems, runwayLooks } from "../data/experienceData.js";
+import { useCatalog } from "../hooks/useCatalog.js";
 
 const modelOrder=[1,5,4,6,3,2];
 const modelUrl=i=>`https://reel-ref-try-the-look.vercel.app/assets/model-${modelOrder[i]}-640.webp`;
 const lookItems=[[0,3,4],[1,7,3],[5,1,3],[7,0,3],[4,1,3],[6,2,3]];
 export default function RunwaySection({add}){
+ const liveItems=useCatalog(runwayItems);
  const [index,setIndex]=useState(0),[saved,setSaved]=useState([]),[sizes,setSizes]=useState({});
- const look=runwayLooks[index],items=lookItems[index].map(id=>runwayItems[id]);
+ const look=runwayLooks[index],items=lookItems[index].map(id=>liveItems.find(p=>p.id===runwayItems[id].id)).filter(Boolean);
  const step=d=>setIndex(i=>(i+d+6)%6);
  return <section className="runway-section" id="runway">
   <div className="runway-heading"><div><span className="eyebrow">06 — TRY THE LOOK / RUNWAY</span><h2>Styled head to <i>toe.</i></h2></div><span>SIX LOOKS · ONE POINT OF VIEW</span></div>
