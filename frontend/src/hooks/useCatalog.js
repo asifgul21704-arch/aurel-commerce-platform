@@ -16,12 +16,11 @@ export function useCatalog(fallback, includeCollectionAdditions = false) {
   if (live === null) return fallback;
   const byId = new Map(live.map(product => [product.productId, product]));
   const baseIds = new Set(fallback.map(product => product.id));
-  const merged = fallback
-    .filter(product => byId.has(product.id))
-    .map(product => {
-      const source = byId.get(product.id);
-      return { ...product, name: source.name, price: source.price, currency: source.currency, image: source.image || product.image, category: source.category || product.category };
-    });
+  const merged = fallback.map(product => {
+    const source = byId.get(product.id);
+    if (!source) return { ...product, isActive: false };
+    return { ...product, name: source.name, price: source.price, currency: source.currency, image: source.image || product.image, category: source.category || product.category, isActive: source.isActive };
+  });
   if (!includeCollectionAdditions) return merged;
   const collection = fallback[0]?.collection;
   const additions = live.filter(product => product.collection === collection && !baseIds.has(product.productId))
