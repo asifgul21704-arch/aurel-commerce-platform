@@ -12,19 +12,24 @@ router.post("/demo-checkout", requireAuth, async (req, res) => {
   if (!requested.length || requested.length > 30) return res.status(400).json({ message: "Your bag is empty or contains too many lines." });
 
   const normalized = [];
+  const currencies = new Set();
   for (const item of requested) {
     const product = catalog.find(entry => entry.id === String(item.productId || ""));
     const quantity = Math.max(1, Math.min(20, Number(item.quantity) || 1));
     if (!product) return res.status(400).json({ message: "An item in your bag is no longer available." });
-    normalized.push({ productId: product.id, name: product.name, price: product.price, quantity });
+    currencies.add(product.currency || "USD");
+    normalized.push({ productId: product.id, name: product.name, price: product.price, quantity, currency: product.currency || "USD" });
   }
 
+  if (currencies.size !== 1) return res.status(400).json({ message: "Please check out one currency at a time. Separate EUR and USD items into different demo orders." });
+  const currency = [...currencies][0];
   const total = Number(normalized.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2));
   const outcome = req.body.demoOutcome === "failed" ? "failed" : "succeeded";
   const order = await Order.create({
     customer: req.user._id,
     items: normalized,
     total,
+    currency,
     payment: { method: req.body.method === "demo-wallet" ? "demo-wallet" : "demo-card", status: outcome, reference: `AUREL-DEMO-${randomUUID().slice(0, 8).toUpperCase()}` },
     status: outcome === "succeeded" ? "processing" : "cancelled"
   });
