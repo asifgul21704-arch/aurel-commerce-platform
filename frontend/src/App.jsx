@@ -6,6 +6,7 @@ import VirtualFitSection from "./components/VirtualFitSection.jsx";
 import MaisonSection from "./components/MaisonSection.jsx";
 import RunwaySection from "./components/RunwaySection.jsx";
 import VellStudio from "./components/VellStudio.jsx";
+import ProductQuickView from "./components/ProductQuickView.jsx";
 
 const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 const CDN = "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2F";
@@ -80,7 +81,7 @@ function App(){
 function Home({add,saved,setSaved}){
   const [slide,setSlide]=useState(0);
   const [filter,setFilter]=useState("All");
-  const [activeDrink,setActiveDrink]=useState(0);
+  const [activeDrink,setActiveDrink]=useState(0),[selectedProduct,setSelectedProduct]=useState(null);
   const visible=filter==="All"?looks:looks.filter(p=>p.category===filter);
   const heroImages=[looks[0].image,looks[6].image,looks[7].image];
   const current=looks[slide%looks.length];
@@ -95,7 +96,7 @@ function Home({add,saved,setSaved}){
     <section className="collection-section" id="vell"><div className="section-heading"><div><span className="eyebrow">THE VELL STUDIO</span><h2>Find your <i>form.</i></h2></div><p>Eight looks. One character. A world of possibilities.<br/>Explore the original VELL virtual styling collection.</p></div>
       <VellStudio add={add}/>
       <div className="filter-row">{["All","Everyday","Athletic","Sleep","Formal","Party","Street"].map(f=><button key={f} className={filter===f?"active":""} onClick={()=>setFilter(f)}>{f}</button>)}<span>{visible.length.toString().padStart(2,"0")} LOOKS</span></div>
-      <div className="product-grid">{visible.map((p,i)=><article className="product-card" key={p.id}><div className="product-image"><img src={p.image} alt={p.name}/><span className="product-number">0{looks.indexOf(p)+1}</span><button className={saved.includes(p.id)?"heart-button active":"heart-button"} onClick={()=>toggleSave(p.id)} aria-label="Save look"><Heart size={17}/></button><button className="quick-add" onClick={()=>add(p)}>ADD TO BAG <Plus size={14}/></button></div><div className="product-meta"><div><small>{p.category.toUpperCase()} · VELL STUDIO</small><h3>{p.name}</h3></div><b>{money(p.price,p.currency||"USD")}</b></div></article>)}</div>
+      <div className="product-grid">{visible.map((p,i)=><article className="product-card" key={p.id}><div className="product-image" role="button" tabIndex={0} onClick={()=>setSelectedProduct(p)} onKeyDown={e=>e.key==="Enter"&&setSelectedProduct(p)}><img src={p.image} alt={p.name}/><span className="product-number">0{looks.indexOf(p)+1}</span><button className={saved.includes(p.id)?"heart-button active":"heart-button"} onClick={e=>{e.stopPropagation();toggleSave(p.id)}} aria-label="Save look"><Heart size={17}/></button><button className="quick-add" onClick={e=>{e.stopPropagation();add(p)}}>ADD TO BAG <Plus size={14}/></button></div><div className="product-meta"><div><small>{p.category.toUpperCase()} · VELL STUDIO</small><h3>{p.name}</h3></div><b>{money(p.price,p.currency||"USD")}</b></div></article>)}</div>
     </section>
     <OffcutSection add={add}/>
     <VirtualFitSection add={add}/>
@@ -103,6 +104,7 @@ function Home({add,saved,setSaved}){
     <RunwaySection add={add}/>
     <section className="feature-band"><div className="feature-photo"><img src={looks[3].image} alt="Lilac Run look"/></div><div className="feature-copy"><span className="eyebrow">VIRTUAL EXPRESSION · 001</span><h2>Style is a<br/><i>feeling.</i></h2><p>Meet your digital muse. Change a silhouette, discover a mood and save the looks that feel like you.</p><a className="dark-button inline" href="#vell">Explore VELL Studio <ArrowUpRight size={16}/></a></div></section>
     <section className="blendy-section" id="blendy" style={{background:drinks[activeDrink].color}}><div className="blendy-top"><span>02 — BLENDY WELLNESS</span><span>FRESHLY MIXED · ALWAYS BRIGHT</span></div><div className="blendy-main"><div className="blendy-copy"><span className="eyebrow">A LITTLE DAILY JOY</span><h2>Good things<br/>come in <i>blends.</i></h2><p>Four fruit-forward favourites. Find your flavour and make a moment of it.</p><div className="flavour-list">{drinks.map((d,i)=><button key={d.id} className={activeDrink===i?"selected":""} onClick={()=>setActiveDrink(i)}><span>0{i+1}</span>{d.name}<ArrowUpRight size={14}/></button>)}</div><button className="blendy-add" onClick={()=>add(drinks[activeDrink])}>ADD {drinks[activeDrink].name.toUpperCase()} · {money(8)} <Plus size={15}/></button></div><div className="blendy-art"><div className="blendy-word">{drinks[activeDrink].name}</div><div className="blendy-fruit-set"><svg className="blendy-bottle" viewBox="0 0 1024 1024" role="img" aria-label={drinks[activeDrink].name+" smoothie bottle"}><image href={drinks[activeDrink].image} width="2048" height="2048"/></svg><svg className="blendy-fruit fruit-one" viewBox="1024 0 1024 1024" aria-hidden="true"><image href={drinks[activeDrink].image} width="2048" height="2048"/></svg><svg className="blendy-fruit fruit-two" viewBox="0 1024 1024 1024" aria-hidden="true"><image href={drinks[activeDrink].image} width="2048" height="2048"/></svg><svg className="blendy-fruit fruit-three" viewBox="1024 1024 1024 1024" aria-hidden="true"><image href={drinks[activeDrink].image} width="2048" height="2048"/></svg></div><div className="blendy-caption">FRUIT. FEELING. FRESHNESS.</div></div></div></section>
+    <ProductQuickView product={selectedProduct} onClose={()=>setSelectedProduct(null)} add={add}/>
     <section className="manifesto" id="journal"><span className="eyebrow">THE AUREL POINT OF VIEW</span><p>Less, but <i>with intention.</i></p><a href="#collections">DISCOVER OUR WORLD <ArrowDown size={14}/></a></section>
   </main>;
 }
