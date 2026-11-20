@@ -49,3 +49,16 @@ export async function createAdmin(req, res) {
   const admin = await User.create({ name, email, passwordHash, role: "admin", createdBy: req.user._id });
   res.status(201).json({ user: publicUser(admin) });
 }
+
+export async function listAdmins(_req, res) {
+  const admins = await User.find({ role: "admin" }).select("name email isActive createdAt").sort({ createdAt: -1 });
+  res.json({ admins });
+}
+
+export async function setAdminStatus(req, res) {
+  const admin = await User.findOne({ _id: req.params.id, role: "admin" });
+  if (!admin) return res.status(404).json({ message: "Administrator not found." });
+  admin.isActive = Boolean(req.body.isActive);
+  await admin.save();
+  res.json({ user: publicUser(admin), isActive: admin.isActive });
+}
