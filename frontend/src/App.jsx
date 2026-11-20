@@ -62,14 +62,15 @@ function App(){
       <Route path="/" element={<Home add={add} saved={saved} setSaved={setSaved}/>}/>
       <Route path="/login" element={<AuthPage mode="login" auth={auth}/>}/>
       <Route path="/signup" element={<AuthPage mode="signup" auth={auth}/>}/>
-      <Route path="/account" element={<AccountPage user={user} token={token} signOut={signOut} onCheckoutComplete={()=>setCart([])}/>}/>
+      <Route path="/checkout" element={<DemoCheckoutPage user={user} token={token} onCheckoutComplete={()=>setCart([])}/>}/>
+      <Route path="/account" element={<AccountPage user={user} token={token} signOut={signOut}/>}/>
       <Route path="/admin" element={<Dashboard user={user} token={token} type="admin"/>}/>
       <Route path="/owner" element={<Dashboard user={user} token={token} type="owner"/>}/>
       <Route path="*" element={<Home add={add} saved={saved} setSaved={setSaved}/>}/>
     </Routes>
     <footer className="footer"><div className="footer-brand">AUREL<span>®</span></div><p>Considered pieces. Everyday rituals. A world of your own.</p><div className="footer-bottom"><span>© 2026 AUREL STUDIO</span><span>DESIGNED TO BE DISCOVERED</span><span>PRIVACY · TERMS · CONTACT</span></div></footer>
     {bagOpen&&<div className="overlay" onMouseDown={e=>e.target===e.currentTarget&&setBagOpen(false)}><aside className="bag-panel"><div className="bag-head"><div><small>YOUR SELECTION</small><h2>Shopping bag <em>({count})</em></h2></div><button className="icon-button" onClick={()=>setBagOpen(false)}><X/></button></div>
-      {cart.length===0?<div className="empty-bag"><ShoppingBag size={30}/><p>Your bag is waiting for something lovely.</p><button className="dark-button" onClick={()=>setBagOpen(false)}>Continue exploring</button></div>:<><div className="bag-items">{cart.map(p=><div className="bag-item" key={`${p.id}-${p.size||"one"}-${p.color||"none"}`}><img src={p.image} alt=""/><div className="bag-item-info"><b>{p.name}</b><small>{p.collection}{p.size?` · Size ${p.size}`:""}{p.color?` · ${p.color}`:""}</small><strong>{money(p.price,p.currency||"USD")}</strong><div className="quantity"><button onClick={()=>setCart(old=>old.map(x=>x.id===p.id&&x.size===p.size&&x.color===p.color?{...x,quantity:Math.max(1,x.quantity-1)}:x))}><Minus size={12}/></button><span>{p.quantity}</span><button onClick={()=>add(p)}><Plus size={12}/></button><button className="remove" onClick={()=>setCart(old=>old.filter(x=>!(x.id===p.id&&x.size===p.size&&x.color===p.color)))}>Remove</button></div></div></div>)}</div><div className="bag-checkout"><div className="bag-totals"><span>Subtotal</span>{cartCurrencies.map(currency=><b key={currency}>{money(totals[currency],currency)}</b>)}</div>{!canCheckout&&<small className="currency-warning">Your bag has multiple currencies. Please keep EUR and USD items in separate demo orders.</small>}<small>Demo checkout only — no real payment is collected.</small><button className="dark-button" disabled={!canCheckout} onClick={()=>{sessionStorage.setItem("aurel-checkout",JSON.stringify(cart.map(({id,quantity,size,color})=>({productId:id,quantity,size,color}))));setBagOpen(false);if(!user)navigate("/login");else navigate("/account?checkout=1")}}>Continue to demo checkout <ArrowRight size={16}/></button></div></>}
+      {cart.length===0?<div className="empty-bag"><ShoppingBag size={30}/><p>Your bag is waiting for something lovely.</p><button className="dark-button" onClick={()=>setBagOpen(false)}>Continue exploring</button></div>:<><div className="bag-items">{cart.map(p=><div className="bag-item" key={`${p.id}-${p.size||"one"}-${p.color||"none"}`}><img src={p.image} alt=""/><div className="bag-item-info"><b>{p.name}</b><small>{p.collection}{p.size?` · Size ${p.size}`:""}{p.color?` · ${p.color}`:""}</small><strong>{money(p.price,p.currency||"USD")}</strong><div className="quantity"><button onClick={()=>setCart(old=>old.map(x=>x.id===p.id&&x.size===p.size&&x.color===p.color?{...x,quantity:Math.max(1,x.quantity-1)}:x))}><Minus size={12}/></button><span>{p.quantity}</span><button onClick={()=>add(p)}><Plus size={12}/></button><button className="remove" onClick={()=>setCart(old=>old.filter(x=>!(x.id===p.id&&x.size===p.size&&x.color===p.color)))}>Remove</button></div></div></div>)}</div><div className="bag-checkout"><div className="bag-totals"><span>Subtotal</span>{cartCurrencies.map(currency=><b key={currency}>{money(totals[currency],currency)}</b>)}</div>{!canCheckout&&<small className="currency-warning">Your bag has multiple currencies. Please keep EUR and USD items in separate demo orders.</small>}<small>Demo checkout only — no real payment is collected.</small><button className="dark-button" disabled={!canCheckout} onClick={()=>{sessionStorage.setItem("aurel-checkout",JSON.stringify(cart.map(({id,quantity,size,color})=>({productId:id,quantity,size,color}))));setBagOpen(false);if(!user)navigate("/login");else navigate("/checkout")}}>Continue to demo checkout <ArrowRight size={16}/></button></div></>}
     </aside></div>}
     {notice&&<div className="toast"><Check size={16}/>{notice}</div>}
   </div>;
@@ -110,17 +111,109 @@ function Home({add,saved,setSaved}){
 function AuthPage({mode,auth}){
   const signup=mode==="signup";const [form,setForm]=useState({name:"",email:"",password:""});const [error,setError]=useState("");const [busy,setBusy]=useState(false);const navigate=useNavigate();
   const change=e=>setForm({...form,[e.target.name]:e.target.value});
-  const submit=async e=>{e.preventDefault();setError("");setBusy(true);try{const response=await fetch(`${API}/auth/${signup?"signup":"login"}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(form)});const data=await response.json();if(!response.ok)throw new Error(data.message||"Unable to sign in");localStorage.setItem("aurel-token",data.token);localStorage.setItem("aurel-user",JSON.stringify(data.user));auth.setToken(data.token);auth.setUser(data.user);auth.notify("Welcome to AUREL");navigate(data.user.role==="owner"?"/owner":data.user.role==="admin"?"/admin":(sessionStorage.getItem("aurel-checkout")?"/account?checkout=1":"/account"));}catch(err){setError(err.message)}finally{setBusy(false)}};
+  const submit=async e=>{e.preventDefault();setError("");setBusy(true);try{const response=await fetch(`${API}/auth/${signup?"signup":"login"}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(form)});const data=await response.json();if(!response.ok)throw new Error(data.message||"Unable to sign in");localStorage.setItem("aurel-token",data.token);localStorage.setItem("aurel-user",JSON.stringify(data.user));auth.setToken(data.token);auth.setUser(data.user);auth.notify("Welcome to AUREL");navigate(data.user.role==="owner"?"/owner":data.user.role==="admin"?"/admin":(sessionStorage.getItem("aurel-checkout")?"/checkout":"/account"));}catch(err){setError(err.message)}finally{setBusy(false)}};
   return <main className="auth-layout"><div className="auth-visual"><span className="eyebrow">AUREL MEMBERSHIP</span><h1>A world of<br/><i>your own.</i></h1><p>Save your favourites, keep your edits and make every discovery yours.</p><div className="auth-image"><img src={looks[1].image} alt="AUREL styling look"/></div></div><div className="auth-form-wrap"><div className="auth-form"><span className="eyebrow">{signup?"CREATE YOUR ACCOUNT":"WELCOME BACK"}</span><h2>{signup?"Join the edit.":"Sign in."}</h2><p>{signup?"Create an account to save looks and manage your orders.":"Your AUREL world is right where you left it."}</p><form onSubmit={submit}>{signup&&<label>Full name<input name="name" value={form.name} onChange={change} autoComplete="name" required minLength="2"/></label>}<label>Email address<input name="email" type="email" value={form.email} onChange={change} autoComplete="email" required/></label><label>Password<input name="password" type="password" value={form.password} onChange={change} autoComplete={signup?"new-password":"current-password"} required minLength={signup?10:1}/>{signup&&<small>Use at least 10 characters.</small>}</label>{error&&<div className="form-error">{error}</div>}<button className="dark-button" disabled={busy}>{busy?"PLEASE WAIT…":signup?"CREATE ACCOUNT":"SIGN IN"} <ArrowRight size={16}/></button></form><div className="auth-switch">{signup?"Already part of AUREL?":"New to AUREL?"} <Link to={signup?"/login":"/signup"}>{signup?"Sign in":"Create an account"}</Link></div><small className="secure-note"><LockKeyhole size={13}/> Your password is securely hashed by the AUREL API.</small></div></div></main>;
 }
 
-function AccountPage({user,token,signOut,onCheckoutComplete}){
-  const [orders,setOrders]=useState([]);const [message,setMessage]=useState("");const [busy,setBusy]=useState(false);
-  useEffect(()=>{if(token)fetch(`${API}/payments/my-orders`,{headers:{Authorization:`Bearer ${token}`}}).then(r=>r.json()).then(d=>setOrders(d.orders||[])).catch(()=>{});},[token]);
-  const checkout=async()=>{const raw=new URLSearchParams(window.location.search).get("checkout");if(raw!=="1")return;setBusy(true);try{const cart=JSON.parse(sessionStorage.getItem("aurel-checkout")||"[]");if(!cart.length){setMessage("Add something to your bag before demo checkout.");return}const res=await fetch(`${API}/payments/demo-checkout`,{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({items:cart,method:"demo-card"})});const data=await res.json();if(!res.ok)throw new Error(data.message);setMessage(data.message);sessionStorage.removeItem("aurel-checkout");window.history.replaceState({}, "", "/account");setOrders(old=>[data.order,...old]);onCheckoutComplete?.();}catch(e){setMessage(e.message)}finally{setBusy(false)}};
-  useEffect(()=>{checkout()},[token]);
+function DemoCheckoutPage({user,token,onCheckoutComplete}){
+  const [items]=useState(()=>{try{return JSON.parse(sessionStorage.getItem("aurel-checkout")||"[]")}catch{return[]}});
+  const [catalog,setCatalog]=useState([]);
+  const [method,setMethod]=useState("demo-card");
+  const [outcome,setOutcome]=useState("succeeded");
+  const [busy,setBusy]=useState(false);
+  const [result,setResult]=useState(null);
+  const [error,setError]=useState("");
+  const navigate=useNavigate();
+
+  useEffect(()=>{
+    fetch(API+"/catalog").then(r=>r.json()).then(d=>setCatalog(d.products||[])).catch(()=>setError("The catalog could not be loaded. Please try again."));
+  },[]);
+
+  const lines=items.map(item=>{
+    const product=catalog.find(p=>p.productId===item.productId);
+    return product?{...item,product}:null;
+  }).filter(Boolean);
+  const total=lines.reduce((sum,line)=>sum+line.product.price*line.quantity,0);
+  const currency=lines[0]?.product.currency||"USD";
+
+  const submit=async event=>{
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    try{
+      const response=await fetch(API+"/payments/demo-checkout",{
+        method:"POST",
+        headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},
+        body:JSON.stringify({items,method,demoOutcome:outcome==="failed"?"failed":"succeeded"})
+      });
+      const data=await response.json();
+      if(!response.ok)throw new Error(data.message||"Demo checkout could not be completed.");
+      setResult(data);
+      if(outcome==="succeeded"){
+        sessionStorage.removeItem("aurel-checkout");
+        onCheckoutComplete?.();
+      }
+    }catch(err){setError(err.message)}
+    finally{setBusy(false)}
+  };
+
+  if(!user)return <main className="center-state"><h2>Sign in to continue.</h2><Link className="dark-button inline" to="/login">Sign in</Link></main>;
+  if(!items.length&&!result)return <main className="center-state"><h2>Your checkout is empty.</h2><Link className="dark-button inline" to="/">Explore the edit</Link></main>;
+
+  return <main className="dashboard-page checkout-page">
+    <div className="dashboard-title"><span className="eyebrow">AUREL · SECURE DEMO CHECKOUT</span><h1>Complete your <i>selection.</i></h1><p>This is a payment simulation. No card information is requested and no money will be charged.</p></div>
+    {error&&<div className="notice-box">{error}</div>}
+    {result?<section className="account-card checkout-result">
+      <span className="eyebrow">DEMO PAYMENT RESULT</span>
+      <h2>{result.order?.payment?.status==="succeeded"?"Payment approved.":"Payment declined."}</h2>
+      <p>{result.message}</p>
+      <p><strong>Reference:</strong> {result.order?.payment?.reference}</p>
+      <p><strong>Order total:</strong> {money(result.order?.total||0,result.order?.currency||"USD")}</p>
+      <button className="dark-button inline" onClick={()=>navigate("/account")}>View my orders <ArrowRight size={16}/></button>
+      {result.order?.payment?.status==="failed"&&<button className="under-link" onClick={()=>setResult(null)}>Try another demo outcome</button>}
+    </section>:<div className="checkout-layout">
+      <section className="account-card checkout-summary">
+        <span className="eyebrow">YOUR ORDER</span>
+        <h2>Order summary</h2>
+        {lines.map(line=><div className="checkout-line" key={line.productId}>
+          <div><b>{line.product.name}</b><small>{line.product.collection}{line.size?" · Size "+line.size:""}{line.color?" · "+line.color:""} × {line.quantity}</small></div>
+          <strong>{money(line.product.price*line.quantity,line.product.currency||"USD")}</strong>
+        </div>)}
+        <div className="checkout-total"><span>Total</span><strong>{money(total,currency)}</strong></div>
+        <p className="demo-disclaimer">Prices are loaded from the AUREL catalog. This is not a live transaction.</p>
+      </section>
+      <form className="account-card checkout-form" onSubmit={submit}>
+        <span className="eyebrow">PAYMENT SIMULATOR</span>
+        <h2>Choose a demo method</h2>
+        <div className="checkout-choices">
+          <button type="button" className={method==="demo-card"?"checkout-choice active":"checkout-choice"} onClick={()=>setMethod("demo-card")}><strong>Demo card</strong><small>Simulated card approval or decline</small></button>
+          <button type="button" className={method==="demo-wallet"?"checkout-choice active":"checkout-choice"} onClick={()=>setMethod("demo-wallet")}><strong>Demo wallet</strong><small>Simulated wallet transaction</small></button>
+        </div>
+        <h3>Test the result</h3>
+        <label className="checkout-radio"><input type="radio" name="outcome" checked={outcome==="succeeded"} onChange={()=>setOutcome("succeeded")}/> Approved — create a processing order</label>
+        <label className="checkout-radio"><input type="radio" name="outcome" checked={outcome==="failed"} onChange={()=>setOutcome("failed")}/> Declined — record a failed demo payment</label>
+        <button className="dark-button" disabled={busy||!lines.length}>{busy?"PROCESSING…":"SIMULATE "+(outcome==="succeeded"?"APPROVED":"DECLINED")+" PAYMENT"} <ArrowRight size={16}/></button>
+        <p className="demo-disclaimer">Never enter real card numbers, bank details, OTPs or passwords here.</p>
+      </form>
+    </div>}
+  </main>;
+}
+
+function AccountPage({user,token,signOut}){
+  const [orders,setOrders]=useState([]);
+  useEffect(()=>{
+    if(token)fetch(API+"/payments/my-orders",{headers:{Authorization:"Bearer "+token}})
+      .then(r=>r.json()).then(d=>setOrders(d.orders||[])).catch(()=>{});
+  },[token]);
   if(!user)return <div className="center-state"><h2>Sign in to view your account.</h2><Link className="dark-button inline" to="/login">Sign in</Link></div>;
-  return <main className="dashboard-page"><div className="dashboard-title"><span className="eyebrow">YOUR AUREL ACCOUNT</span><h1>Hello, <i>{user.name.split(" ")[0]}.</i></h1><p>Keep your saved looks close and your orders in view.</p></div>{message&&<div className="notice-box">{message}</div>}<div className="account-grid"><div className="account-card"><small>MEMBER PROFILE</small><UserRound/><h3>{user.name}</h3><p>{user.email}</p><span className="role-pill">{user.role}</span><button className="under-link" onClick={signOut}>Sign out</button></div><div className="account-card orders-card"><small>ORDER HISTORY</small><h3>Your orders</h3>{orders.length?orders.map(o=><div className="order-row" key={o._id}><span>{o.payment?.reference}</span><b>{money(o.total,o.currency||"USD")}</b><em>{o.payment?.status}</em></div>):<p>No orders yet. Your next discovery is waiting.</p>}</div></div><p className="demo-disclaimer">Payments in this project are simulated for demonstration. No card details or real funds are processed.</p></main>;
+  return <main className="dashboard-page">
+    <div className="dashboard-title"><span className="eyebrow">YOUR AUREL ACCOUNT</span><h1>Hello, <i>{user.name.split(" ")[0]}.</i></h1><p>Keep your saved looks close and your orders in view.</p></div>
+    <div className="account-grid">
+      <div className="account-card"><small>MEMBER PROFILE</small><UserRound/><h3>{user.name}</h3><p>{user.email}</p><span className="role-pill">{user.role}</span><button className="under-link" onClick={signOut}>Sign out</button></div>
+      <div className="account-card orders-card"><small>ORDER HISTORY</small><h3>Your orders</h3>{orders.length?orders.map(o=><div className="order-row" key={o._id}><span>{o.payment?.reference}</span><b>{money(o.total,o.currency||"USD")}</b><em>{o.payment?.status}</em></div>):<p>No orders yet. Your next discovery is waiting.</p>}</div>
+    </div>
+    <p className="demo-disclaimer">Payments in this project are simulated for demonstration. No card details or real funds are processed.</p>
+  </main>;
 }
 
 function Dashboard({user,token,type}){
