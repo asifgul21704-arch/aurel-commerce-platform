@@ -37,12 +37,12 @@ export const runwayLooks = [
 ];
 
 export const runwayItems = [
-  {id:"runway-0",name:"Air Jordan 12 Retro",price:149,currency:"USD",collection:"Try the Look",image:"https://reel-ref-try-the-look.vercel.app/assets/source-air-jordan-12-retro-copy.webp"},
+  {id:"runway-0",name:"Air Jordan 12 Retro",price:149,currency:"USD",collection:"Try the Look",image:"https://reel-ref-try-the-look.vercel.app/assets/source-air-jordan-12-retro-copy.webp",sizes:["40","41","42","43","44","45","46"],sizes:["40","41","42","43","44","45","46"],sizes:["40","41","42","43","44","45","46"]},
   {id:"runway-1",name:"Tatum 5 Orbit",price:149,currency:"USD",collection:"Try the Look",image:"https://reel-ref-try-the-look.vercel.app/assets/source-tatum-5-orbit-copy.webp"},
   {id:"runway-2",name:"Luka 5",price:149,currency:"USD",collection:"Try the Look",image:"https://reel-ref-try-the-look.vercel.app/assets/source-tatum-5-orbit.webp"},
-  {id:"runway-3",name:"Tshirt",price:199,currency:"USD",collection:"Try the Look",image:"https://reel-ref-try-the-look.vercel.app/assets/source-tshirt.webp"},
-  {id:"runway-4",name:"Sweatshirt",price:199,currency:"USD",collection:"Try the Look",image:"https://reel-ref-try-the-look.vercel.app/assets/source-sweatshirt.webp"},
-  {id:"runway-5",name:"Sweatshirt Plus",price:199,currency:"USD",collection:"Try the Look",image:"https://reel-ref-try-the-look.vercel.app/assets/source-sweatshirt-plus.webp"},
-  {id:"runway-6",name:"Hoodie",price:199,currency:"USD",collection:"Try the Look",image:"https://reel-ref-try-the-look.vercel.app/assets/source-hoodie.webp"},
-  {id:"runway-7",name:"Hoodie Black",price:199,currency:"USD",collection:"Try the Look",image:"https://reel-ref-try-the-look.vercel.app/assets/source-hoodie-black.webp"}
+  {id:"runway-3",name:"Tshirt",price:199,currency:"USD",collection:"Try the Look",image:"https://reel-ref-try-the-look.vercel.app/assets/source-tshirt.webp",sizes:["S","L","M","XL"]},
+  {id:"runway-4",name:"Sweatshirt",price:199,currency:"USD",collection:"Try the Look",image:"https://reel-ref-try-the-look.vercel.app/assets/source-sweatshirt.webp",sizes:["S","L","M","XL"]},
+  {id:"runway-5",name:"Sweatshirt Plus",price:199,currency:"USD",collection:"Try the Look",image:"https://reel-ref-try-the-look.vercel.app/assets/source-sweatshirt-plus.webp",sizes:["S","L","M","XL"]},
+  {id:"runway-6",name:"Hoodie",price:199,currency:"USD",collection:"Try the Look",image:"https://reel-ref-try-the-look.vercel.app/assets/source-hoodie.webp",sizes:["S","L","M","XL"]},
+  {id:"runway-7",name:"Hoodie Black",price:199,currency:"USD",collection:"Try the Look",image:"https://reel-ref-try-the-look.vercel.app/assets/source-hoodie-black.webp",sizes:["S","L","M","XL"]}
 ];
