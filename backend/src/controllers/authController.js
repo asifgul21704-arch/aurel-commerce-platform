@@ -28,6 +28,9 @@ export async function signup(req, res) {
 export async function login(req, res) {
   const email = String(req.body.email || "").trim().toLowerCase();
   const password = String(req.body.password || "");
+  if (!/^\\S+@\\S+\\.\\S+$/.test(email) || email.length > 254 || password.length < 1 || password.length > 128) {
+    return res.status(400).json({ message: "Enter a valid email and password." });
+  }
   const user = await User.findOne({ email }).select("+passwordHash");
   if (!user || !user.isActive || !(await bcrypt.compare(password, user.passwordHash))) {
     return res.status(401).json({ message: "Email or password is incorrect." });
