@@ -283,44 +283,45 @@ function Dashboard({user,token,type}){
   const [productForm,setProductForm]=useState({name:"",collection:"",category:"General",price:"",currency:"USD",image:"",description:""});
   const [editingProduct,setEditingProduct]=useState(null),[message,setMessage]=useState("");
   const headers={Authorization:`Bearer ${token}`};
-  const loadOrders=()=>fetch(`${API}/payments/admin/orders`,{headers}).then(r=>r.json()).then(d=>setOrders(d.orders||[])).catch(()=>{});
-  const loadAdmins=()=>fetch(`${API}/auth/admins`,{headers}).then(r=>r.json()).then(d=>setAdmins(d.admins||[])).catch(()=>{});
-  const loadProducts=()=>fetch(`${API}/catalog/admin/products`,{headers}).then(r=>r.json()).then(d=>setProducts(d.products||[])).catch(()=>{});
+  const request=(url,options,fallback)=>fetch(url,options).then(response=>readApiResponse(response,fallback));
+  const loadOrders=()=>request(`${API}/payments/admin/orders`,{headers},"Orders could not be loaded.").then(d=>setOrders(d.orders||[])).catch(error=>setMessage(error.message));
+  const loadAdmins=()=>request(`${API}/auth/admins`,{headers},"Administrator list could not be loaded.").then(d=>setAdmins(d.admins||[])).catch(error=>setMessage(error.message));
+  const loadProducts=()=>request(`${API}/catalog/admin/products`,{headers},"Products could not be loaded.").then(d=>setProducts(d.products||[])).catch(error=>setMessage(error.message));
   useEffect(()=>{
     if(!user||!["admin","owner"].includes(user.role)){setMessage("You do not have access to this dashboard.");return}
-    fetch(`${API}/catalog/admin/summary`,{headers}).then(r=>r.json()).then(setSummary).catch(()=>{});
+    request(`${API}/catalog/admin/summary`,{headers},"Dashboard summary could not be loaded.").then(setSummary).catch(error=>setMessage(error.message));
     loadOrders();loadProducts();
     if(user.role==="owner")loadAdmins();
   },[user,token]);
   const create=async e=>{
     e.preventDefault();setMessage("");
     const r=await fetch(`${API}/auth/admins`,{method:"POST",headers:{"Content-Type":"application/json",...headers},body:JSON.stringify(form)});
-    const d=await r.json();if(!r.ok){setMessage(d.message);return}
+    const d=await readApiResponse(r,"Admin account could not be created.").catch(error=>{setMessage(error.message);return null});if(!d)return;
     setForm({name:"",email:"",password:""});setMessage("Admin account created.");loadAdmins();
   };
   const saveProduct=async e=>{
     e.preventDefault();setMessage("");
     const url=editingProduct?`${API}/catalog/admin/products/${editingProduct}`:`${API}/catalog/admin/products`;
     const r=await fetch(url,{method:editingProduct?"PATCH":"POST",headers:{"Content-Type":"application/json",...headers},body:JSON.stringify(productForm)});
-    const d=await r.json();if(!r.ok){setMessage(d.message);return}
+    const d=await readApiResponse(r,"Product could not be saved.").catch(error=>{setMessage(error.message);return null});if(!d)return;
     setProductForm({name:"",collection:"",category:"General",price:"",currency:"USD",image:"",description:""});setEditingProduct(null);setMessage(editingProduct?"Product updated.":"Product created.");loadProducts();
-    fetch(`${API}/catalog/admin/summary`,{headers}).then(r=>r.json()).then(setSummary).catch(()=>{});
+    request(`${API}/catalog/admin/summary`,{headers},"Dashboard summary could not be loaded.").then(setSummary).catch(error=>setMessage(error.message));
   };
   const editProduct=p=>{setEditingProduct(p._id);setProductForm({name:p.name,collection:p.collection,category:p.category||"General",price:String(p.price),currency:p.currency||"USD",image:p.image||"",description:p.description||""});window.scrollTo({top:document.body.scrollHeight,behavior:"smooth"})};
   const archiveProduct=async p=>{
     const r=await fetch(`${API}/catalog/admin/products/${p._id}`,{method:"DELETE",headers});
-    const d=await r.json();if(!r.ok){setMessage(d.message);return}
+    const d=await readApiResponse(r,"Product could not be archived.").catch(error=>{setMessage(error.message);return null});if(!d)return;
     setMessage(`${p.name} archived.`);loadProducts();
     fetch(`${API}/catalog/admin/summary`,{headers}).then(r=>r.json()).then(setSummary).catch(()=>{});
   };
   const changeStatus=async(id,status)=>{
     const r=await fetch(`${API}/payments/admin/orders/${id}/status`,{method:"PATCH",headers:{"Content-Type":"application/json",...headers},body:JSON.stringify({status})});
-    const d=await r.json();if(!r.ok){setMessage(d.message);return}
+    const d=await readApiResponse(r,"Order status could not be updated.").catch(error=>{setMessage(error.message);return null});if(!d)return;
     setOrders(old=>old.map(o=>o._id===id?d.order:o));setMessage("Order status updated.");
   };
   const toggleAdmin=async(admin)=>{
     const r=await fetch(`${API}/auth/admins/${admin._id}`,{method:"PATCH",headers:{"Content-Type":"application/json",...headers},body:JSON.stringify({isActive:!admin.isActive})});
-    const d=await r.json();if(!r.ok){setMessage(d.message);return}
+    const d=await readApiResponse(r,"Administrator access could not be updated.").catch(error=>{setMessage(error.message);return null});if(!d)return;
     setAdmins(old=>old.map(a=>a._id===admin._id?{...a,isActive:d.isActive}:a));setMessage("Administrator access updated.");
   };
   if(!user||!(type==="owner"?user.role==="owner":["admin","owner"].includes(user.role)))return <main className="center-state"><h2>Restricted area</h2><p>{message||"Sign in with an authorized account."}</p><Link className="dark-button inline" to="/login">Sign in</Link></main>;

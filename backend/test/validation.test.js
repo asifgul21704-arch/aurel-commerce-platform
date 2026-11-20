@@ -43,3 +43,10 @@ test("supports partial edits but rejects empty updates", () => {
   assert.match(validateProductInput({}, { partial: true }), /at least one/);
   assert.match(validateProductInput({ price: "" }, { partial: true }), /price/);
 });
+
+
+test("rejects missing or non-object product payloads safely", () => {
+  assert.match(validateProductInput(null), /Product name/);
+  assert.match(validateProductInput(undefined), /Product name/);
+  assert.match(validateProductInput([], { partial: true }), /at least one/);
+});
