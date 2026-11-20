@@ -13,9 +13,10 @@ function issueToken(user) {
 }
 
 export async function signup(req, res) {
-  const name = String(req.body.name || "").trim();
-  const email = String(req.body.email || "").trim().toLowerCase();
-  const password = String(req.body.password || "");
+  const body = req.body && typeof req.body === "object" && !Array.isArray(req.body) ? req.body : {};
+  const name = String(body.name || "").trim();
+  const email = String(body.email || "").trim().toLowerCase();
+  const password = String(body.password || "");
   if (name.length < 2 || name.length > 80) return res.status(400).json({ message: "Enter a name between 2 and 80 characters." });
   if (!/^\S+@\S+\.\S+$/.test(email) || email.length > 254) return res.status(400).json({ message: "Enter a valid email address." });
   if (password.length < 10 || password.length > 128) return res.status(400).json({ message: "Password must be 10–128 characters." });
@@ -26,8 +27,9 @@ export async function signup(req, res) {
 }
 
 export async function login(req, res) {
-  const email = String(req.body.email || "").trim().toLowerCase();
-  const password = String(req.body.password || "");
+  const body = req.body && typeof req.body === "object" && !Array.isArray(req.body) ? req.body : {};
+  const email = String(body.email || "").trim().toLowerCase();
+  const password = String(body.password || "");
   if (!/^\S+@\S+\.\S+$/.test(email) || email.length > 254 || password.length < 1 || password.length > 128) {
     return res.status(400).json({ message: "Enter a valid email and password." });
   }
@@ -43,9 +45,10 @@ export async function me(req, res) {
 }
 
 export async function createAdmin(req, res) {
-  const name = String(req.body.name || "").trim();
-  const email = String(req.body.email || "").trim().toLowerCase();
-  const password = String(req.body.password || "");
+  const body = req.body && typeof req.body === "object" && !Array.isArray(req.body) ? req.body : {};
+  const name = String(body.name || "").trim();
+  const email = String(body.email || "").trim().toLowerCase();
+  const password = String(body.password || "");
   if (name.length < 2 || name.length > 80 || !/^\S+@\S+\.\S+$/.test(email) || password.length < 12 || password.length > 128) {
     return res.status(400).json({ message: "Provide a valid name, email and password of 12–128 characters." });
   }
@@ -61,10 +64,11 @@ export async function listAdmins(_req, res) {
 }
 
 export async function setAdminStatus(req, res) {
-  if (typeof req.body.isActive !== "boolean") return res.status(400).json({ message: "isActive must be true or false." });
+  const body = req.body && typeof req.body === "object" && !Array.isArray(req.body) ? req.body : {};
+  if (typeof body.isActive !== "boolean") return res.status(400).json({ message: "isActive must be true or false." });
   const admin = await User.findOne({ _id: req.params.id, role: "admin" });
   if (!admin) return res.status(404).json({ message: "Administrator not found." });
-  admin.isActive = req.body.isActive;
+  admin.isActive = body.isActive;
   await admin.save();
   res.json({ user: publicUser(admin), isActive: admin.isActive });
 }

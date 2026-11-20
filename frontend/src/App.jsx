@@ -65,7 +65,7 @@ function App(){
   useEffect(()=>{
     if(!token||!commerceReady||commerceOwner!==token)return;
     const items=cart.map(({id,productId,quantity,size,color})=>({productId:productId||id,quantity,size,color}));
-    fetch(`${API}/account/cart`,{method:"PUT",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({items})}).catch(()=>notify("Your bag could not sync. Please check your connection."));
+    fetch(`${API}/account/cart`,{method:"PUT",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({items})}).then(response=>readApiResponse(response,"Your bag could not be saved.")).catch(()=>notify("Your bag could not sync. Please check your connection."));
   },[cart,token,commerceReady,commerceOwner]);
   useEffect(()=>{
     if(!token||!commerceReady||commerceOwner!==token)return;
