@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Heart, Plus } from "lucide-react";
 import { maisonItems } from "../data/experienceData.js";
+import { useCatalog } from "../hooks/useCatalog.js";
 
 const MODELS="https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261102_042056_1a704ff7-b0e5-4a9f-bbda-62392b819fb6.png&w=3840&q=85";
 const PIECES="https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261102_042057_080e85b0-b4aa-4072-8eb9-2304c7baf42b.png&w=2400&q=85";
@@ -16,9 +17,10 @@ function PieceImage({index}){
  return <svg viewBox={`${b[0]} ${b[2]} ${b[1]-b[0]} ${b[3]-b[2]}`} preserveAspectRatio="xMidYMid meet"><svg x="0" y="0" width="960" height="720" viewBox="0 0 960 720"><image href={PIECES} width="960" height="720"/></svg></svg>;
 }
 export default function MaisonSection({add}){
+ const liveItems=useCatalog(maisonItems);
  const stageRef=useRef(null),positionRef=useRef(0),targetRef=useRef(0),dragRef=useRef(null),wheelTimer=useRef(null);
  const [position,setPosition]=useState(0),[stageSize,setStageSize]=useState({width:900,height:620}),[saved,setSaved]=useState([]);
- const current=mod(Math.round(position),6),lookNumber=15+current,lookItems=groups[current].map(i=>maisonItems[i]);
+ const current=mod(Math.round(position),6),lookNumber=15+current,lookItems=groups[current].map(i=>liveItems.find(p=>p.id===maisonItems[i].id)).filter(Boolean);
  useEffect(()=>{
   const node=stageRef.current;if(!node)return;
   const measure=()=>{const r=node.getBoundingClientRect();setStageSize({width:r.width,height:r.height})};
