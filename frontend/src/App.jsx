@@ -147,7 +147,7 @@ function AuthPage({mode,auth}){
 function DemoCheckoutPage({user,token,onCheckoutComplete}){
   const [items]=useState(()=>{try{return JSON.parse(sessionStorage.getItem("aurel-checkout")||"[]")}catch{return[]}});
   const [catalog,setCatalog]=useState([]);
-  const [method,setMethod]=useState("demo-card");
+  const [method,setMethod]=useState("demo-card");\n  const [shipping,setShipping]=useState({fullName:user?.name||"",email:user?.email||"",phone:"",address:"",city:"",postalCode:"",country:"Pakistan"});
   const [outcome,setOutcome]=useState("succeeded");
   const [busy,setBusy]=useState(false);
   const [result,setResult]=useState(null);
@@ -173,7 +173,7 @@ function DemoCheckoutPage({user,token,onCheckoutComplete}){
       const response=await fetch(API+"/payments/demo-checkout",{
         method:"POST",
         headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},
-        body:JSON.stringify({items,method,demoOutcome:outcome==="failed"?"failed":"succeeded"})
+        body:JSON.stringify({items,method,shipping,demoOutcome:outcome==="failed"?"failed":"succeeded"})
       });
       const data=await response.json();
       if(!response.ok)throw new Error(data.message||"Demo checkout could not be completed.");
@@ -213,6 +213,16 @@ function DemoCheckoutPage({user,token,onCheckoutComplete}){
       </section>
       <form className="account-card checkout-form" onSubmit={submit}>
         <span className="eyebrow">PAYMENT SIMULATOR</span>
+        <h2>Shipping details</h2>
+        <div className="shipping-fields">
+          <label>Full name<input required maxLength="80" autoComplete="name" value={shipping.fullName} onChange={e=>setShipping({...shipping,fullName:e.target.value})}/></label>
+          <label>Email address<input required type="email" maxLength="254" autoComplete="email" value={shipping.email} onChange={e=>setShipping({...shipping,email:e.target.value})}/></label>
+          <label>Phone number<input required type="tel" maxLength="30" autoComplete="tel" value={shipping.phone} onChange={e=>setShipping({...shipping,phone:e.target.value})}/></label>
+          <label>Street address<input required minLength="5" maxLength="240" autoComplete="street-address" value={shipping.address} onChange={e=>setShipping({...shipping,address:e.target.value})}/></label>
+          <label>City<input required maxLength="80" autoComplete="address-level2" value={shipping.city} onChange={e=>setShipping({...shipping,city:e.target.value})}/></label>
+          <label>Postal code<input maxLength="20" autoComplete="postal-code" value={shipping.postalCode} onChange={e=>setShipping({...shipping,postalCode:e.target.value})}/></label>
+          <label>Country<input required maxLength="80" autoComplete="country-name" value={shipping.country} onChange={e=>setShipping({...shipping,country:e.target.value})}/></label>
+        </div>
         <h2>Choose a demo method</h2>
         <div className="checkout-choices">
           <button type="button" className={method==="demo-card"?"checkout-choice active":"checkout-choice"} onClick={()=>setMethod("demo-card")}><strong>Demo card</strong><small>Simulated card approval or decline</small></button>
