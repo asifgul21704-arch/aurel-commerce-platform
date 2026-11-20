@@ -5,6 +5,7 @@ import OffcutSection from "./components/OffcutSection.jsx";
 import VirtualFitSection from "./components/VirtualFitSection.jsx";
 import MaisonSection from "./components/MaisonSection.jsx";
 import RunwaySection from "./components/RunwaySection.jsx";
+import VellStudio from "./components/VellStudio.jsx";
 
 const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 const CDN = "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2F";
@@ -92,6 +93,7 @@ function Home({add,saved,setSaved}){
     </section>
     <section className="intro-strip" id="collections"><span>01 — OUR UNIVERSE</span><p>One destination.<br/><i>Many ways to express.</i></p><span>SCROLL TO EXPLORE ↓</span></section>
     <section className="collection-section" id="vell"><div className="section-heading"><div><span className="eyebrow">THE VELL STUDIO</span><h2>Find your <i>form.</i></h2></div><p>Eight looks. One character. A world of possibilities.<br/>Explore the original VELL virtual styling collection.</p></div>
+      <VellStudio add={add}/>
       <div className="filter-row">{["All","Everyday","Athletic","Sleep","Formal","Party","Street"].map(f=><button key={f} className={filter===f?"active":""} onClick={()=>setFilter(f)}>{f}</button>)}<span>{visible.length.toString().padStart(2,"0")} LOOKS</span></div>
       <div className="product-grid">{visible.map((p,i)=><article className="product-card" key={p.id}><div className="product-image"><img src={p.image} alt={p.name}/><span className="product-number">0{looks.indexOf(p)+1}</span><button className={saved.includes(p.id)?"heart-button active":"heart-button"} onClick={()=>toggleSave(p.id)} aria-label="Save look"><Heart size={17}/></button><button className="quick-add" onClick={()=>add(p)}>ADD TO BAG <Plus size={14}/></button></div><div className="product-meta"><div><small>{p.category.toUpperCase()} · VELL STUDIO</small><h3>{p.name}</h3></div><b>{money(p.price,p.currency||"USD")}</b></div></article>)}</div>
     </section>
