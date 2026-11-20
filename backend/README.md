@@ -23,7 +23,7 @@ The script refuses to create a second owner. No default credentials are included
 - `GET /api/auth/me` — authenticated profile
 - `GET /api/auth/admins` — owner only\n- `POST /api/auth/admins` — owner only\n- `PATCH /api/auth/admins/:id` — owner only
 - `GET /api/catalog`
-- `GET /api/catalog/admin/summary` — admin / owner
+- `GET /api/catalog/admin/summary` — admin / owner\n- `GET /api/catalog/admin/products` — admin / owner\n- `POST /api/catalog/admin/products` — admin / owner\n- `PATCH /api/catalog/admin/products/:id` — admin / owner\n- `DELETE /api/catalog/admin/products/:id` — admin / owner (archives)
 - `POST /api/payments/demo-checkout` — authenticated, simulated only
 - `GET /api/payments/my-orders` — authenticated order history\n- `GET /api/payments/admin/orders` — admin / owner\n- `PATCH /api/payments/admin/orders/:id/status` — admin / owner
 
