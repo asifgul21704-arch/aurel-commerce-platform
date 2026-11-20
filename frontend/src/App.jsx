@@ -78,7 +78,7 @@ function App(){
 function Home({add,saved,setSaved}){
   const [slide,setSlide]=useState(0);
   const [filter,setFilter]=useState("All");
-  const liveLooks=useCatalog(looks,true);
+  const liveLooks=useCatalog(looks);
   const [selectedProduct,setSelectedProduct]=useState(null);
   const activeLooks=liveLooks.filter(p=>p.isActive!==false);const visible=filter==="All"?activeLooks:activeLooks.filter(p=>p.category===filter);
   const heroImages=[looks[0].image,looks[6].image,looks[7].image];
